@@ -1,0 +1,904 @@
+/* ---------- Google Font ---------- */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap");
+
+/* ---------- CSS Variables ---------- */
+:root {
+  --primary:      #2962ff;
+  --primary-light:#e8eeff;
+  --primary-mid:  #bbcfff;
+  --navy:         #1a237e;
+  --navy-soft:    #283593;
+  --bg:           #f5f8ff;
+  --white:        #ffffff;
+  --gray-50:      #f8faff;
+  --gray-100:     #eef1f8;
+  --gray-200:     #dde3f0;
+  --gray-400:     #8a96b8;
+  --text:         #1a237e;
+  --text-soft:    #5c6594;
+  --danger:       #ef4444;
+  --orange:       #f97316;
+  --success:      #10b981;
+  --navbar-h:     70px;
+  --radius:       14px;
+  --shadow:       0 4px 24px rgba(41, 98, 255, 0.10);
+  --shadow-md:    0 8px 32px rgba(41, 98, 255, 0.14);
+  --font-main:    "DM Sans", sans-serif;
+  --font-logo:    "Sora", sans-serif;
+  --transition:   0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ========================================================
+   NAVBAR
+   ======================================================== */
+.haatza-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  height: var(--navbar-h);
+  background: rgba(245, 248, 255, 0.88);
+  backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  border-bottom: 1.5px solid rgba(41, 98, 255, 0.08);
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: box-shadow var(--transition), background var(--transition);
+}
+
+.haatza-navbar.scrolled {
+  box-shadow: 0 6px 32px rgba(41, 98, 255, 0.16);
+  background: rgba(245, 248, 255, 0.97);
+}
+
+.navbar-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+}
+
+/* ---- Left ---- */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Logo ---- */
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  margin-left: -8px;
+  margin-right: 12px;
+}
+
+.brand-logo-img {
+  height: 95px !important;
+  width: auto;
+  max-width: 400px !important;
+  max-height: 95px !important;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(41, 98, 255, 0.12));
+  transition: all var(--transition);
+}
+
+/* ---- Search ---- */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--gray-100);
+  border: 1.5px solid transparent;
+  border-radius: 50px;
+  padding: 0 14px;
+  height: 42px;
+  gap: 10px;
+  flex: 1;
+  max-width: 320px;
+  transition: border-color var(--transition), box-shadow var(--transition),
+              background var(--transition);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.search-wrap.focused {
+  border-color: var(--primary);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.12),
+              inset 0 1px 4px rgba(0,0,0,0.02);
+}
+
+.search-icon {
+  color: var(--gray-400);
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.search-wrap.focused .search-icon { color: var(--primary); }
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-main);
+  font-size: 13.5px;
+  color: var(--navy);
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: var(--gray-400);
+  font-size: 13px;
+}
+
+.search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.search-clear:hover { color: var(--danger); }
+
+/* ---- Center Greeting ---- */
+.navbar-center { flex-shrink: 0; text-align: center; }
+
+.greeting-text {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-soft);
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+.greeting-name {
+  font-weight: 800;
+  color: var(--navy);
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+/* ---- Right ---- */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.icon-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Icon Button ---- */
+.icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  color: var(--navy-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition),
+              transform var(--transition), box-shadow var(--transition);
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(41, 98, 255, 0.16);
+}
+
+.icon-btn:active { transform: scale(0.95); }
+
+/* ---- Badges ---- */
+.badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg);
+  line-height: 1;
+}
+
+.badge-red    { background: var(--danger); color: #fff; }
+.badge-orange { background: var(--orange); color: #fff; }
+
+/* ====================================================
+   PROFILE — Avatar-only button (ALL breakpoints)
+   The name/email/role live ONLY inside the dropdown.
+   ==================================================== */
+.profile-wrap { position: relative; }
+
+/* Simple circular avatar button — no text beside it */
+.profile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 2px solid var(--gray-200);
+  border-radius: 50%;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition),
+              background var(--transition);
+  flex-shrink: 0;
+}
+
+.profile-btn:hover,
+.profile-btn.active {
+  border-color: var(--primary-mid);
+  box-shadow: 0 4px 16px rgba(41, 98, 255, 0.20);
+  background: var(--primary-light);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2962ff, #1a237e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-logo);
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+
+/* ---- Dropdown Menu ---- */
+.dropdown-menu {
+  position: fixed;               /* FIX: fixed so it's always relative to viewport */
+  top: calc(var(--navbar-h) + 8px);
+  right: 12px;                   /* FIX: 12px from viewport right edge — never clips */
+  width: 280px;
+  max-width: calc(100vw - 24px); /* FIX: never wider than screen minus 24px padding */
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: dropIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  z-index: 2000;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* Dropdown header — shows avatar + full name + full email */
+.dropdown-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary-light) 0%, #f0f4ff 100%);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.dropdown-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2962ff, #1a237e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-logo);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.dropdown-user-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.dropdown-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+/* Full email — always wraps, never truncates */
+.dropdown-email {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  margin-top: 3px;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.dropdown-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 3px;
+}
+
+.dropdown-divider { height: 1px; background: var(--gray-100); }
+
+.dropdown-list { list-style: none; padding: 6px 0; }
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+  text-align: left;
+}
+
+.dropdown-item:hover        { background: var(--primary-light); color: var(--primary); }
+.dropdown-item.danger       { color: var(--danger); }
+.dropdown-item.danger:hover { background: #fff1f1; color: var(--danger); }
+
+.di-icon  { display: flex; align-items: center; opacity: 0.8; }
+.di-label { flex: 1; }
+
+.di-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+  background: #d1fae5;
+  border-radius: 8px;
+  padding: 2px 7px;
+}
+
+/* ========================================================
+   MOBILE 3-DOT TOGGLE BUTTON
+   Visible on mobile AND tablet (≤ 900px)
+   ======================================================== */
+.mobile-icons-toggle-btn {
+  display: none; /* shown via media queries below */
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  color: var(--navy-soft);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition),
+              transform var(--transition), box-shadow var(--transition);
+}
+
+.mobile-icons-toggle-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(41, 98, 255, 0.16);
+}
+
+.mobile-icons-toggle-btn:active { transform: scale(0.95); }
+
+/* ========================================================
+   MOBILE / TABLET DRAWER — Bell, Wallet, Messages
+   ======================================================== */
+.mobile-drawer {
+  position: fixed;
+  top: var(--navbar-h);
+  right: 0;
+  width: auto;
+  min-width: 220px;
+  height: auto;
+  background: var(--white);
+  box-shadow: -4px 4px 24px rgba(41, 98, 255, 0.14);
+  border-radius: 0 0 0 16px;
+  z-index: 999;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 20px 16px;
+}
+
+.mobile-drawer.open { transform: translateX(0); }
+
+.mobile-icon-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.mobile-drawer-icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 14px;
+  transition: background var(--transition);
+}
+
+.mobile-drawer-icon-btn:hover { background: var(--primary-light); }
+
+.mobile-drawer-icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy-soft);
+  transition: background var(--transition), color var(--transition);
+}
+
+.mobile-drawer-icon-btn:hover .mobile-drawer-icon {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.mobile-drawer-icon .badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+}
+
+.icon-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+/* Drawer overlay */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 35, 126, 0.18);
+  backdrop-filter: blur(3px);
+  z-index: 998;
+  animation: fadeIn 0.25s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ========================================================
+   DEMO PAGE CONTENT
+   ======================================================== */
+.demo-page-content {
+  padding-top: calc(var(--navbar-h) + 32px);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 48px;
+}
+
+.demo-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 36px 40px;
+  box-shadow: 0 4px 32px rgba(41, 98, 255, 0.08);
+  border: 1px solid var(--gray-100);
+  max-width: 780px;
+  width: 100%;
+}
+
+.demo-card p { color: var(--text-soft); font-size: 15px; }
+
+/* ========================================================
+   VISIBILITY HELPERS — defaults (desktop)
+   ======================================================== */
+.mobile-search-icon-btn { display: none; }
+.mobile-center          { display: none; }
+.desktop-center         { display: block; }
+
+/* ========================================================
+   MOBILE SEARCH BAR (drops below navbar)
+   ======================================================== */
+.mobile-search-bar {
+  position: fixed;
+  top: var(--navbar-h);
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--white);
+  border-bottom: 1.5px solid var(--primary-mid);
+  box-shadow: 0 4px 20px rgba(41, 98, 255, 0.12);
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.mobile-search-bar .search-icon { color: var(--primary); flex-shrink: 0; }
+
+.mobile-search-bar .search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-main);
+  font-size: 14px;
+  color: var(--navy);
+}
+
+.mobile-search-bar .search-input::placeholder { color: var(--gray-400); }
+
+.mobile-search-bar .search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+/* ========================================================
+   LOGO RESPONSIVE SIZING
+   ======================================================== */
+@media (max-width: 900px) {
+  .brand-logo-img {
+    height: 65px !important;
+    max-width: 190px !important;
+    max-height: 65px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-logo-img {
+    height: 75px !important;
+    max-width: 160px !important;
+    max-height: 75px !important;
+  }
+}
+
+/* ========================================================
+   RESPONSIVE — Large Desktop (≥ 1280px)
+   ======================================================== */
+@media (min-width: 1280px) {
+  .search-wrap  { max-width: 360px; }
+  .navbar-inner { padding: 0 40px; }
+
+  /* Show icon group (Bell, Wallet, Messages) on large desktop */
+  .icon-group               { display: flex; }
+  .mobile-icons-toggle-btn  { display: none; }
+}
+
+/* ========================================================
+   RESPONSIVE — Large Tablet (1024px – 1279px)
+   ======================================================== */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .navbar-inner {
+    padding: 0 28px;
+    gap: 24px;
+  }
+
+  .search-wrap {
+    max-width: 260px;
+    flex-shrink: 0;
+  }
+
+  .navbar-center {
+    flex: 1;
+    min-width: 0;
+    padding: 0 16px;
+  }
+
+  .greeting-text {
+    font-size: 17px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .greeting-name { font-size: 18px; }
+
+  /* Show icon group on large tablet */
+  .icon-group              { display: flex; }
+  .mobile-icons-toggle-btn { display: none; }
+}
+
+/* ========================================================
+   RESPONSIVE — Tablet 900px – 1023px
+   (covers 912×1368 overlap fix)
+   ======================================================== */
+@media (min-width: 900px) and (max-width: 1023px) {
+  .navbar-inner {
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  .navbar-left {
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+
+  .search-wrap {
+    max-width: 200px;
+    flex-shrink: 0;
+    min-width: 160px;
+  }
+
+  .navbar-center {
+    flex: 1;
+    min-width: 0;
+    padding: 0 12px;
+    text-align: center;
+  }
+
+  .greeting-text {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .greeting-name { font-size: 17px; }
+
+  .desktop-center { display: block; }
+
+  /* Show 3-dot drawer toggle — hide desktop icon group */
+  .icon-group              { display: none; }
+  .mobile-icons-toggle-btn { display: flex; }
+}
+
+/* ========================================================
+   RESPONSIVE — Tablet 768px – 899px
+   (820×1180, 768×1024, 853×1280)
+   ======================================================== */
+@media (min-width: 768px) and (max-width: 899px) {
+  .navbar-inner {
+    padding: 0 16px;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .navbar-left {
+    flex: 0 0 auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .desktop-search {
+    display: flex !important;
+    max-width: 200px;
+    min-width: 150px;
+    flex-shrink: 0;
+  }
+
+  .search-input { font-size: 13px; }
+  .search-input::placeholder { font-size: 12px; }
+
+  .desktop-center { display: block !important; }
+
+  .navbar-center {
+    flex: 1;
+    min-width: 0;
+    padding: 0 10px;
+    text-align: center;
+  }
+
+  .greeting-text {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .greeting-name { font-size: 17px; }
+
+  /* Show 3-dot drawer toggle — hide desktop icon group */
+  .icon-group              { display: none; }
+  .mobile-icons-toggle-btn { display: flex; }
+
+  .mobile-center          { display: none !important; }
+  .mobile-search-icon-btn { display: none !important; }
+}
+
+/* ========================================================
+   RESPONSIVE — Tablet 640px – 767px
+   ======================================================== */
+@media (min-width: 640px) and (max-width: 767px) {
+  .navbar-inner {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .navbar-left {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  .desktop-search {
+    display: flex !important;
+    max-width: 160px;
+    min-width: 120px;
+  }
+
+  .search-input { font-size: 12px; }
+  .search-input::placeholder { font-size: 11.5px; }
+
+  .desktop-center { display: block !important; }
+
+  .navbar-center {
+    flex: 1;
+    min-width: 0;
+    padding: 0 8px;
+    text-align: center;
+  }
+
+  .greeting-text {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .greeting-name { font-size: 15px; }
+
+  /* Show 3-dot drawer toggle — hide desktop icon group */
+  .icon-group              { display: none; }
+  .mobile-icons-toggle-btn { display: flex; }
+
+  .mobile-center          { display: none !important; }
+  .mobile-search-icon-btn { display: none !important; }
+}
+
+/* ========================================================
+   RESPONSIVE — Mobile ≤ 639px
+   ======================================================== */
+@media (max-width: 639px) {
+  .navbar-inner {
+    padding: 0 14px;
+    gap: 0;
+    position: relative;
+  }
+
+  .navbar-left {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  /* Hide desktop search on mobile */
+  .desktop-search { display: none !important; }
+
+  /* Hide desktop icon group on mobile */
+  .icon-group { display: none; }
+
+  /* Show mobile search icon */
+  .mobile-search-icon-btn {
+    display: flex !important;
+    background: none;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Show 3-dot toggle on mobile */
+  .mobile-icons-toggle-btn { display: flex; }
+
+  /* Mobile center greeting */
+  .mobile-center {
+    display: flex !important;
+    flex: 1 1 0;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .mobile-center .greeting-text {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-center .greeting-name { font-size: 15px; }
+
+  .desktop-center { display: none !important; }
+
+  .navbar-right {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  /* Dropdown email on very small screens */
+  .dropdown-email {
+    font-size: 11px;
+    word-break: break-all;
+    white-space: normal;
+  }
+
+  .demo-card { padding: 24px 20px; }
+}

@@ -1,0 +1,823 @@
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+/* ===== Page Wrapper ===== */
+.signin-page {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: #ffffff;
+}
+
+/* ===========================
+   ILLUSTRATION PANEL (Left)
+=========================== */
+.illustration-panel {
+  flex: 1 1 55%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f2f6 0%, #e4e8ef 100%);
+  height: 100vh;
+  height: 100dvh;
+  display: block;
+}
+
+.side-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ===========================
+   FORM PANEL (Right)
+=========================== */
+.form-panel {
+  flex: 0 0 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  padding: 48px 24px;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.form-inner {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ===== Logo ===== */
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.logo-image {
+  height: 150px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* ===== Heading ===== */
+.form-inner h1 {
+  font-size: clamp(22px, 2.5vw, 30px);
+  font-weight: 700;
+  color: #1a1d23;
+  margin-bottom: 32px;
+  text-align: center;
+  letter-spacing: -0.3px;
+}
+
+/* ===== Input Group ===== */
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-size: clamp(13px, 1.2vw, 15px);
+  color: #4b5563;
+  margin-bottom: 10px;
+  font-weight: 400;
+}
+
+.input-group input {
+  width: 100%;
+  padding: clamp(14px, 1.4vw, 18px) 16px;
+  font-size: clamp(13px, 1.2vw, 15px);
+  color: #6b7280;
+  background-color: #e8e8e8;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  transition: box-shadow 0.2s, background-color 0.2s;
+  font-family: inherit;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px #2962ff;
+}
+
+/* ===== Terms Text ===== */
+.terms-text {
+  font-size: clamp(12px, 1.1vw, 14px);
+  color: #4b5563;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.terms-link {
+  color: #2962ff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== Continue Button ===== */
+.signin-btn {
+  width: 100%;
+  padding: clamp(14px, 1.4vw, 18px);
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: clamp(15px, 1.3vw, 17px);
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  font-family: inherit;
+  margin-bottom: 20px;
+}
+
+.signin-btn:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.38);
+}
+
+.signin-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== Footer ===== */
+.form-footer {
+  text-align: center;
+}
+
+.register-link {
+  font-size: clamp(20px, 1.5vw, 20px);
+  color: #2563eb;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.register-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Error Message ─────────────────────────────── */
+.error-text {
+  color: #e53935;
+  font-size: 13px;
+  margin: -8px 0 8px 0;
+  padding: 8px 12px;
+  background-color: #fff5f5;
+  border-left: 3px solid #e53935;
+  border-radius: 4px;
+}
+
+/* ── Disabled States ───────────────────────────── */
+.signin-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* ── Password Field Slide-in Animation ─────────── */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.password-field-animate {
+  animation: slideDown 0.22s ease-out forwards;
+}
+
+/* ── Locked contact field visual cue ──────────── */
+.input-group input:disabled {
+  background-color: #efefef;
+  color: #9ca3af;
+  cursor: default;
+  opacity: 1;
+}
+
+/* ==========================================
+   DESKTOP & LAPTOP: 1024px and above
+========================================== */
+
+@media (min-width: 1024px) {
+  .signin-page {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+  }
+
+  .illustration-panel {
+    flex: 0 0 60%;
+    width: 60%;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+    display: block;
+  }
+
+  .side-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+  }
+
+  .form-panel {
+    flex: 0 0 40%;
+    width: 40%;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    padding: 32px 24px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .form-inner {
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+  }
+}
+
+/* 1024px – 1179px (small laptops) */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .form-inner {
+    max-width: 380px;
+  }
+
+  .logo-image {
+    height: 110px;
+  }
+
+  .form-inner h1 {
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+
+  .input-group input {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .signin-btn {
+    padding: 13px;
+    font-size: 14px;
+  }
+}
+
+/* 1180px – 1365px (medium laptops, iPad Pro landscape) */
+@media (min-width: 1180px) and (max-width: 1365px) {
+  .form-inner {
+    max-width: 400px;
+  }
+
+  .logo-image {
+    height: 120px;
+  }
+
+  .form-inner h1 {
+    font-size: 22px;
+    margin-bottom: 28px;
+  }
+
+  .input-group input {
+    padding: 13px 15px;
+    font-size: 14px;
+  }
+
+  .signin-btn {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
+/* 1366px – 1439px (common laptop resolution) */
+@media (min-width: 1366px) and (max-width: 1439px) {
+  .form-inner {
+    max-width: 420px;
+  }
+
+  .logo-image {
+    height: 130px;
+  }
+
+  .form-inner h1 {
+    font-size: 24px;
+  }
+}
+
+/* 1440px and above (large desktop) */
+@media (min-width: 1440px) {
+  .form-panel {
+    padding: 48px 32px;
+  }
+
+  .form-inner {
+    max-width: 460px;
+  }
+
+  .logo-image {
+    height: 150px;
+  }
+
+  .form-inner h1 {
+    font-size: 28px;
+    margin-bottom: 32px;
+  }
+
+  .input-group input {
+    padding: 16px 16px;
+    font-size: 15px;
+  }
+
+  .signin-btn {
+    padding: 16px;
+    font-size: 16px;
+  }
+}
+
+/* ==========================================
+   TABLET: 600px – 1023px
+========================================== */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .illustration-panel {
+    flex: 0 0 50%;
+    width: 50%;
+  }
+
+  .form-panel {
+    flex: 0 0 50%;
+    width: 50%;
+    padding: 32px 20px;
+  }
+
+  .form-inner {
+    max-width: 380px;
+  }
+
+  .logo-image {
+    height: 110px;
+  }
+
+  .form-inner h1 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .input-group input {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .signin-btn {
+    padding: 13px;
+    font-size: 14px;
+  }
+
+  .register-link {
+    font-size: 16px;
+  }
+}
+
+/* -----------------------------------------------
+   MOBILE: up to 599px
+   (FIXED: removed nested @media blocks)
+----------------------------------------------- */
+@media (max-width: 599px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  body {
+    position: fixed;
+    inset: 0;
+    overflow-x: hidden;
+    touch-action: pan-y;
+  }
+
+  /* Hide the video panel on mobile */
+  .illustration-panel {
+    display: none;
+  }
+
+  .signin-page {
+    flex-direction: column;
+    width: 100%;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overflow-x: hidden;
+    position: fixed;
+    inset: 0;
+  }
+
+  /* ── FIXED: these were inside a nested @media — now flat ── */
+  .form-panel {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .form-inner {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+  /* ───────────────────────────────────────────────── */
+
+  .input-group {
+    margin-bottom: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .input-group input {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-left: 0;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .logo-wrapper {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+    margin-bottom: 12px;
+    gap: 0;
+  }
+
+  .logo-image {
+    height: 90px;
+    margin-bottom: 0;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logo-brand {
+    margin-left: -10px;
+    font-size: 22px;
+  }
+
+  .logo-tagline {
+    margin-left: -12px;
+    padding-left: 6px;
+    font-size: 11px;
+  }
+
+  .form-inner h1 {
+    font-size: 19px;
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .terms-text {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  .signin-btn {
+    padding: 13px;
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+
+  .register-link {
+    font-size: 15px;
+  }
+}
+
+/* -----------------------------------------------
+   MOBILE SMALL: up to 479px
+   (FIXED: removed nested @media blocks)
+----------------------------------------------- */
+@media (max-width: 479px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  body {
+    position: fixed;
+    inset: 0;
+    overflow-x: hidden;
+    touch-action: pan-y;
+  }
+
+  .illustration-panel {
+    display: none;
+  }
+
+  .signin-page {
+    width: 100%;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overflow-x: hidden;
+    position: fixed;
+    inset: 0;
+  }
+
+  /* ── FIXED: these were inside a nested @media — now flat ── */
+  .form-panel {
+    padding: 0 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-inner {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+  /* ───────────────────────────────────────────────── */
+
+  .input-group {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .input-group input {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-left: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .logo-wrapper {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+    margin-bottom: 8px;
+    gap: 0;
+  }
+
+  .logo-image {
+    height: 72px;
+    margin-bottom: 0;
+  }
+
+  .logo-brand {
+    font-size: 17px;
+    margin-left: -8px;
+  }
+
+  .logo-tagline {
+    font-size: 9px;
+    margin-left: -10px;
+    padding-left: 5px;
+  }
+
+  .form-inner h1 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .input-group label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .terms-text {
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+
+  .signin-btn {
+    padding: 11px;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .register-link {
+    font-size: 13px;
+  }
+}
+
+/* ==========================================
+   SURFACE DUO / 540×720 SPECIFIC FIX
+   Targets only 530–550px wide × max 730px tall
+   to avoid touching any other breakpoint.
+========================================== */
+@media (min-width: 530px) and (max-width: 550px) and (max-height: 730px) {
+  /* Override the mobile breakpoint that hides the video panel */
+  .illustration-panel {
+    display: block;
+    flex: 0 0 60%;
+    width: 60%;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .side-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Force 60/40 row layout */
+  .signin-page {
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+  }
+
+  /* Form panel: 40% wide, scrollable vertically so nothing is clipped */
+  .form-panel {
+    flex: 0 0 40%;
+    width: 40%;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px 10px 14px 10px;
+    box-sizing: border-box;
+    background-color: #f5f5f5;
+  }
+
+  .form-inner {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Scale down logo */
+  .logo-wrapper {
+    margin-bottom: 6px;
+  }
+
+  .logo-image {
+    height: 50px;
+  }
+
+  /* Scale down heading */
+  .form-inner h1 {
+    font-size: 11px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  /* Scale down input groups */
+  .input-group {
+    margin-bottom: 7px;
+  }
+
+  .input-group label {
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+
+  .input-group input {
+    padding: 7px 8px;
+    font-size: 10px;
+    border-radius: 5px;
+  }
+
+  /* Scale down terms */
+  .terms-text {
+    font-size: 9px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  /* Scale down button */
+  .signin-btn {
+    padding: 8px;
+    font-size: 11px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+  }
+
+  /* Scale down register link */
+  .register-link {
+    font-size: 11px;
+  }
+
+  /* Scale down error message */
+  .error-text {
+    font-size: 9px;
+    padding: 5px 8px;
+    margin: -4px 0 6px 0;
+  }
+}

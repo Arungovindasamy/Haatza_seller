@@ -1,0 +1,499 @@
+/* ================================================================
+   Haatza Seller Dashboard — LivePreview Component Styles
+   Primary: #2962ff  |  Theme: Glassmorphism Premium
+   ================================================================ */
+
+:root {
+  --lp-primary:       #2962ff;
+  --lp-primary-glow:  rgba(41,98,255,0.12);
+  --lp-green:         #059669;
+  --lp-green-bg:      rgba(5,150,105,0.08);
+  --lp-red:           #ef4444;
+  --lp-border:        rgba(226,232,240,0.8);
+  --lp-shadow:        0 10px 30px rgba(41,98,255,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --lp-text:          #0f172a;
+  --lp-text-2:        #475569;
+  --lp-text-3:        #94a3b8;
+  --lp-glass:         rgba(255,255,255,0.92);
+  --ff-display:       'Plus Jakarta Sans', sans-serif;
+  --ff-body:          'DM Sans', sans-serif;
+}
+
+/* ── Common Layout Grid for Wizard Pages ── */
+.lp-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+  width: 100%;
+}
+
+.lp-form-side {
+  min-width: 0;
+}
+
+.lp-preview-side {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Hide mobile preview by default on desktop */
+.lp-preview-mobile {
+  display: none;
+}
+
+/* Custom Scrollbar for preview container */
+.lp-preview-side::-webkit-scrollbar {
+  width: 6px;
+}
+.lp-preview-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lp-preview-side::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.lp-preview-side::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ── Live Preview Card Design ── */
+.lp-card {
+  background: var(--lp-glass);
+  border: 1.5px solid var(--lp-border);
+  border-radius: 20px;
+  box-shadow: var(--lp-shadow);
+  padding: 24px;
+  font-family: var(--ff-body);
+  color: var(--lp-text);
+  backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.lp-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-family: var(--ff-display);
+  font-weight: 800;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lp-primary);
+}
+
+.lp-card-title {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ── Completion Progress Bar ── */
+.lp-progress-section {
+  margin-bottom: 18px;
+}
+
+.lp-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.lp-progress-label {
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lp-text-2);
+}
+
+.lp-progress-pct {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--lp-primary);
+}
+
+.lp-progress-track {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.lp-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--lp-primary), #4f46e5);
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(41,98,255,0.3);
+}
+
+.lp-progress-sub {
+  font-size: 11px;
+  color: var(--lp-text-3);
+  margin: 6px 0 0;
+  font-weight: 500;
+}
+
+.lp-divider {
+  height: 1px;
+  background: rgba(226,232,240,0.8);
+  margin: 20px 0;
+}
+
+/* ── Sections ── */
+.lp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lp-section-title {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lp-text);
+  margin: 0 0 4px;
+  position: relative;
+  letter-spacing: -0.01em;
+}
+
+/* Rows and Keys/Values */
+.lp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 12.5px;
+  gap: 12px;
+}
+
+.lp-key {
+  color: var(--lp-text-2);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.lp-val {
+  color: var(--lp-text);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.lp-val--placeholder {
+  color: var(--lp-text-3);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ── Images Gallery ── */
+.lp-images-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.lp-main-image-wrap {
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1.5px solid var(--lp-border);
+  background: #f8fafc;
+}
+
+.lp-main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lp-main-image-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  font-family: var(--ff-display);
+}
+
+.lp-sub-images-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.lp-sub-image {
+  width: 100%;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1.5px solid var(--lp-border);
+  background: #f8fafc;
+  transition: transform 0.2s ease;
+}
+.lp-sub-image:hover {
+  transform: scale(1.05);
+}
+
+/* Empty Block / Placeholders */
+.lp-empty-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1.5px dashed var(--lp-text-3);
+  background: #fafafb;
+  border-radius: 12px;
+  color: var(--lp-text-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+.lp-empty-block svg {
+  color: var(--lp-text-3);
+  flex-shrink: 0;
+}
+
+.lp-empty-block--inline {
+  border: none;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  justify-content: flex-start;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--lp-text-3);
+}
+
+/* ── Product Options Layout ── */
+.lp-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lp-option-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lp-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Size Chips */
+.lp-size-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lp-size-chip {
+  padding: 5px 12px;
+  background: #f1f5f9;
+  border: 1px solid var(--lp-border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lp-text);
+  font-family: var(--ff-display);
+}
+
+/* Color Swatches Grid */
+.lp-color-variants-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lp-color-variant-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid var(--lp-border);
+  border-radius: 10px;
+  gap: 12px;
+}
+
+.lp-color-variant-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.lp-color-variant-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lp-text);
+}
+
+.lp-color-variant-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--lp-border);
+  background: #ffffff;
+}
+
+.lp-color-variant-no-img {
+  font-size: 10px;
+  color: var(--lp-text-3);
+  font-style: italic;
+}
+
+/* Variant Price Matrix */
+.lp-variants-pricing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--lp-border);
+}
+
+.lp-variant-price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  padding-bottom: 6px;
+}
+.lp-variant-price-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.lp-variant-comb {
+  color: var(--lp-text-2);
+  font-weight: 500;
+}
+
+.lp-variant-price-val {
+  color: var(--lp-primary);
+  font-weight: 700;
+  font-family: var(--ff-display);
+}
+
+/* ── Specifications Table ── */
+.lp-specs-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--lp-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.lp-spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+.lp-spec-row:last-child {
+  border-bottom: none;
+}
+
+.lp-spec-key {
+  color: var(--lp-text-2);
+  font-weight: 500;
+}
+
+.lp-spec-val {
+  color: var(--lp-text);
+  font-weight: 600;
+  text-align: right;
+  max-width: 65%;
+  word-break: break-word;
+}
+
+/* ── Promotion & Size Chart ── */
+.lp-promo-banner-wrap,
+.lp-sizechart-wrap {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid var(--lp-border);
+  background: #f8fafc;
+}
+
+.lp-promo-banner,
+.lp-sizechart {
+  width: 100%;
+  height: auto;
+  max-height: 150px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Keywords Chips */
+.lp-kw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lp-kw-chip {
+  padding: 4px 10px;
+  background: var(--lp-primary-glow);
+  color: var(--lp-primary);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Sell and Earn Box */
+.lp-promo-commission-box {
+  background: var(--lp-green-bg);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* ── Responsive Layout Adaptations ── */
+@media (max-width: 1024px) {
+  .lp-main-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .lp-preview-side {
+    display: none; /* Hide sidebar sticky preview */
+  }
+  
+  .lp-preview-mobile {
+    display: block; /* Show preview at the bottom/top on tablets & mobile */
+    width: 100%;
+    margin-top: 32px;
+  }
+}

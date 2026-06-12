@@ -1,0 +1,767 @@
+/* ===========================
+   GLOBAL RESET
+=========================== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* ===========================
+   MAIN CONTAINER
+=========================== */
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ===========================
+   LEFT VIDEO PANEL
+=========================== */
+.illustration-panel {
+  flex: 1 1 60%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f2f6 0%, #e4e8ef 100%);
+  height: 100vh;
+}
+
+.side-video,
+.side-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* ===========================
+   FORM PANEL (Right)
+=========================== */
+.form-panel {
+  flex: 0 0 40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  padding: 32px 24px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.form-inner {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ===== Logo ===== */
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.logo-image {
+  height: 180px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* ===========================
+   TEXT
+=========================== */
+.title {
+  margin: 8px 0 10px;
+  font-size: 27px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.blue {
+  color: #2962ff;
+}
+
+.subtitle {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #555;
+  text-align: center;
+}
+
+/* ===========================
+   INPUTS
+=========================== */
+.input-box {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #b0b0b0;
+  color: #6b7280;
+  background-color: #e8e8e8;
+  transition: box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
+  margin-bottom: 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.input-box:focus {
+  border-color: #2962ff;
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.12);
+  background-color: #ffffff;
+}
+
+/* ── Phone ── */
+.phone-box {
+  display: flex;
+  border: 1px solid  #b0b0b0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  color: #6b7280;
+  background-color: #e8e8e8;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.phone-box:focus-within {
+  border-color: #2962ff;
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.12);
+  background-color: #ffffff;
+}
+
+.phone-box:focus-within .phone-input {
+  background-color: #ffffff;
+}
+
+.country-code {
+  padding: 14px;
+  background: #e0e0e0;
+  font-size: 14px;
+    transition: background-color 0.2s;  
+}
+
+.phone-input {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #6b7280;
+  background-color: #e8e8e8;
+}
+
+/* ── Password ── */
+.password-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid #b0b0b0; 
+  border-radius: 12px;
+  margin-bottom: 12px;
+  color: #6b7280;
+  background-color: #e8e8e8;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.password-box:focus-within {
+  border-color: #2962ff;
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.12);
+  background-color: #ffffff;
+}
+
+.password-input {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #6b7280;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+/* ── Hide browser native password reveal button ── */
+.password-input::-ms-reveal,
+.password-input::-ms-clear,
+.password-input::-webkit-credentials-auto-fill-button,
+.password-input::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.eye-icon {
+  padding: 0 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #666;
+  /* Icon size controlled via SVG width/height in JSX (16px) */
+}
+
+.eye-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===========================
+   TERMS
+=========================== */
+.terms {
+  font-size: 12px;
+  color: gray;
+  margin-bottom: 12px;
+}
+
+.link {
+  color: #2962ff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ===========================
+   BUTTON
+=========================== */
+.btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right, #2962ff, #2962ff);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   SIGN IN
+=========================== */
+.signin-text {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* ===========================
+   MESSAGES
+=========================== */
+.error-message {
+  color: #e53935;
+  background: #fff5f5;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.success-message {
+  color: #2e7d32;
+  background: #f1f8f1;
+  border: 1px solid #c8e6c9;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* ===========================
+   TABLET — base layout
+   Targets: 540×720, 764×1024, 820×1180,
+            853×1280, 912×1368, 1024×600,
+            1024×1366, 1280×800
+=========================== */
+@media (min-width: 540px) and (max-width: 1280px) {
+  html, body {
+    overflow-y: auto;
+  }
+
+  .container {
+    flex-direction: row;
+    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  /* Video panel: 60% width, full viewport height */
+  .illustration-panel {
+    display: block;
+    flex: 0 0 60%;
+    width: 60%;
+    height: 100vh;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+  }
+
+  .side-video,
+  .side-image {
+    width: 100%;
+    height: 140%;
+    object-fit: cover;
+    position: absolute;
+    top: -20%;
+    left: 0;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  /* Form panel: 40% width, centered content */
+  .form-panel {
+    display: flex;
+    flex: 0 0 40%;
+    width: 40%;
+    height: 100vh;
+    min-height: 100vh;
+    padding: 20px 10px;
+    overflow-y: auto;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-inner {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .logo-image {
+    height: 120px;
+  }
+
+  .logo-wrapper {
+    margin-bottom: 10px;
+  }
+
+  .title {
+    font-size: 14px;
+    margin: 4px 0 5px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+    margin-bottom: 7px;
+  }
+
+  .input-box {
+    padding: 9px 8px;
+    font-size: 11px;
+    margin-bottom: 7px;
+  }
+
+  .phone-box {
+    margin-bottom: 7px;
+  }
+
+  .phone-input {
+    padding: 9px 8px;
+    font-size: 11px;
+  }
+
+  .country-code {
+    padding: 9px 8px;
+    font-size: 11px;
+  }
+
+  .password-box {
+    margin-bottom: 7px;
+  }
+
+  .password-input {
+    padding: 9px 8px;
+    font-size: 11px;
+  }
+
+  .btn {
+    padding: 9px;
+    font-size: 11px;
+    margin-bottom: 7px;
+  }
+
+  .signin-text {
+    font-size: 11px;
+  }
+
+  .terms {
+    font-size: 10px;
+    margin-bottom: 7px;
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 10px;
+    padding: 7px 8px;
+  }
+}
+
+/* Narrower tablet (540px wide) — slight adjustments */
+@media (min-width: 540px) and (max-width: 600px) {
+  .illustration-panel {
+    flex: 0 0 60%;
+    width: 60%;
+  }
+
+  .form-panel {
+    flex: 0 0 40%;
+    width: 40%;
+    padding: 16px 6px;
+  }
+
+  .logo-image {
+    height: 100px;
+  }
+
+  .title {
+    font-size: 11px;
+  }
+
+  .subtitle {
+    font-size: 9px;
+  }
+
+  .input-box,
+  .phone-input,
+  .password-input {
+    padding: 7px 6px;
+    font-size: 10px;
+  }
+
+  .country-code {
+    padding: 7px 6px;
+    font-size: 10px;
+  }
+
+  .btn {
+    padding: 8px;
+    font-size: 10px;
+  }
+
+  .signin-text {
+    font-size: 10px;
+  }
+
+  .terms {
+    font-size: 9px;
+  }
+}
+
+/* Landscape-short tablets (1024×600, 1280×800) — 60/40, full video height */
+@media (min-width: 900px) and (max-width: 1280px) and (max-height: 820px) {
+  .illustration-panel {
+    flex: 0 0 60%;
+    width: 60%;
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+  .side-video,
+  .side-image {
+    width: 110%;
+    height: 140%;
+    object-fit: cover;
+    position: absolute;
+    top: -20%;
+    left: -5%;
+  }
+
+  .form-panel {
+    flex: 0 0 40%;
+    width: 40%;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    align-items: center;
+    overflow-y: auto;
+  }
+
+  .logo-image {
+    height: 105px;
+  }
+
+  .logo-wrapper {
+    margin-bottom: 7px;
+  }
+
+  .title {
+    font-size: 12px;
+    margin: 3px 0 3px;
+  }
+
+  .subtitle {
+    margin-bottom: 5px;
+    font-size: 9px;
+  }
+
+  .input-box,
+  .phone-input,
+  .password-input {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .input-box {
+    margin-bottom: 5px;
+  }
+
+  .phone-box {
+    margin-bottom: 5px;
+  }
+
+  .password-box {
+    margin-bottom: 5px;
+  }
+
+  .btn {
+    padding: 8px;
+    margin-bottom: 5px;
+    font-size: 10px;
+  }
+
+  .terms {
+    margin-bottom: 5px;
+    font-size: 9px;
+  }
+
+  .signin-text {
+    font-size: 10px;
+  }
+}
+
+/* ===========================
+   1280×800 SPECIFIC OVERRIDE
+   60% video, 40% form, full
+   video height for visual
+   balance on this resolution
+=========================== */
+@media (min-width: 1280px) and (max-width: 1280px) and (min-height: 800px) and (max-height: 800px) {
+  html, body {
+    overflow-y: auto;
+  }
+
+  .container {
+    flex-direction: row;
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .illustration-panel {
+    display: block;
+    flex: 0 0 60%;
+    width: 60%;
+    height: 100vh;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  .side-video,
+  .side-image {
+    width: 110%;
+    height: 140%;
+    object-fit: cover;
+    position: absolute;
+    top: -20%;
+    left: -5%;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  .form-panel {
+    display: flex;
+    flex: 0 0 40%;
+    width: 40%;
+    height: 100vh;
+    min-height: 100vh;
+    padding: 14px 8px;
+    overflow-y: auto;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-inner {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .logo-image {
+    height: 105px;
+  }
+
+  .logo-wrapper {
+    margin-bottom: 7px;
+  }
+
+  .title {
+    font-size: 12px;
+    margin: 3px 0 4px;
+  }
+
+  .subtitle {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+
+  .input-box {
+    padding: 7px 8px;
+    font-size: 10px;
+    margin-bottom: 5px;
+  }
+
+  .phone-box {
+    margin-bottom: 5px;
+  }
+
+  .phone-input {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .country-code {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .password-box {
+    margin-bottom: 5px;
+  }
+
+  .password-input {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .btn {
+    padding: 8px;
+    font-size: 10px;
+    margin-bottom: 5px;
+  }
+
+  .signin-text {
+    font-size: 10px;
+  }
+
+  .terms {
+    font-size: 9px;
+    margin-bottom: 5px;
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+}
+
+/* ===========================
+   TABLET (old rule — kept for
+   any gap between 769–1024 not
+   covered above; now hidden by
+   the new rules above)
+=========================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Overridden by the tablet two-column rules above */
+}
+
+/* ===========================
+   MOBILE
+=========================== */
+@media (max-width: 539px) {
+  html, body {
+    overflow-y: auto;
+  }
+
+  .container {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .illustration-panel {
+    display: none;
+  }
+
+  .form-panel {
+    width: 100%;
+    min-height: 100vh;
+    padding: 24px 16px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-inner {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* ===========================
+   SMALL MOBILE
+=========================== */
+@media (max-width: 480px) {
+  .title {
+    font-size: 15px;
+  }
+
+  .input-box,
+  .phone-input,
+  .password-input {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .signin-text {
+    font-size: 14px;
+  }
+
+  .logo-image {
+    height: 110px;
+  }
+
+  .logo-brand {
+    font-size: 18px;
+  }
+
+  .logo-tagline {
+    font-size: 10px;
+  }
+}

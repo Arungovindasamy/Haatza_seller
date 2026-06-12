@@ -1,0 +1,63 @@
+/* AppRoutes.css - Main layout container */
+.app-container {
+  min-height: 100vh;
+  position: relative;
+}
+
+.main-content {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+  padding: 80px 24px 24px; /* Space for navbar + content padding */
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+}
+
+.sidebar-open .main-content {
+  margin-left: 320px; /* Matches --sidebar-width */
+}
+
+@media (max-width: 1024px) {
+  .sidebar-open .main-content {
+    margin-left: 300px; /* Matches --sidebar-width-md */
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-open .main-content {
+    margin-left: 0; /* No push on mobile */
+  }
+  
+  .main-content {
+    padding: 80px 16px 16px;
+  }
+}
+
+/* Demo placeholder styles */
+.page-placeholder {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.placeholder-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.placeholder-card h1 {
+  color: white;
+  font-size: 28px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.placeholder-card p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  line-height: 1.6;
+}

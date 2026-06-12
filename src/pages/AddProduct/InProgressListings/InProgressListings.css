@@ -1,0 +1,979 @@
+/* InProgressListings.css */
+/* All selectors scoped to ip-* prefix */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+.ip-root {
+  padding: 24px;
+  min-height: 100vh;
+  background: #f4f6fb;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────────── */
+.ip-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ip-header-left h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 4px;
+}
+
+.ip-header-left p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ─── Controls row ───────────────────────────────────────────────────────────
+   Desktop: all in one horizontal row.
+   Mobile:  search full-width first row, then selects + refresh on second row.
+────────────────────────────────────────────────────────────────────────────── */
+.ip-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ─── Search ────────────────────────────────────────────────────────────────── */
+.ip-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #9ca3af;
+  /* Desktop width – shrinks to auto on mobile */
+  min-width: 0;
+}
+
+.ip-search {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: #1a1d2e;
+  background: transparent;
+  width: 180px;
+  min-width: 0;
+}
+
+.ip-search::placeholder { color: #9ca3af; }
+
+/* ─── Select / Filters ───────────────────────────────────────────────────────── */
+.ip-select {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  min-width: 0;
+  /* Let the browser render the full option text */
+  max-width: 100%;
+}
+
+.ip-select:focus { border-color: #2962ff; }
+
+/* ─── Refresh button ─────────────────────────────────────────────────────────── */
+.ip-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.ip-btn-refresh:hover:not(:disabled) { background: #f9fafb; }
+.ip-btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── Card ───────────────────────────────────────────────────────────────────── */
+/* NOTE: overflow:visible so the dot-menu dropdown is never clipped */
+.ip-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: visible;  /* critical – allows dropdown to escape card boundary */
+}
+
+/* ─── Desktop Table ──────────────────────────────────────────────────────────── */
+.ip-table-wrap {
+  overflow-x: auto;
+  /* Re-apply rounding only to the table wrapper */
+  border-radius: 12px 12px 0 0;
+}
+
+.ip-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ip-table thead tr {
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ip-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.ip-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f3f6;
+  vertical-align: middle;
+}
+
+.ip-table tbody tr:last-child td { border-bottom: none; }
+.ip-table tbody tr:hover { background: #fafbfd; }
+
+/* ─── Product Image ──────────────────────────────────────────────────────────── */
+.ip-img {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  background: #f1f3f6;
+  display: block;
+}
+
+/* ─── Name button ─────────────────────────────────────────────────────────────── */
+.ip-name-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2962ff;
+  cursor: pointer;
+  text-align: left;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  position: relative;
+}
+
+.ip-name-btn:hover { text-decoration: underline; }
+
+/* Full-name tooltip for desktop table rows */
+.ip-name-btn::after {
+  content: attr(data-fullname);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  background: #1a1d2e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: normal;
+  max-width: 280px;
+  min-width: 120px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ip-name-btn:hover::after {
+  opacity: 1;
+}
+
+/* ─── Price ───────────────────────────────────────────────────────────────────── */
+.ip-price       { color: #374151; font-weight: 500; }
+.ip-final-price { color: #059669; font-weight: 600; }
+.ip-discount    { color: #f59e0b; font-size: 12px; font-weight: 500; }
+.ip-no-discount { color: #d1d5db; }
+
+/* ─── Status Badge ────────────────────────────────────────────────────────────── */
+.ip-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.ip-badge--approved { background: #d1fae5; color: #065f46; }
+.ip-badge--pending  { background: #fef3c7; color: #92400e; }
+.ip-badge--rejected { background: #fee2e2; color: #991b1b; }
+.ip-badge--draft    { background: #f1f3f6; color: #6b7280; }
+.ip-badge--update   { background: #eff6ff; color: #1d4ed8; }
+
+/* ─── Desktop Actions ─────────────────────────────────────────────────────────── */
+.ip-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ip-action-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ip-action-btn:hover { background: #f1f3f6; color: #374151; border-color: #d1d5db; }
+.ip-action-btn--delete:hover { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
+
+/* ─── Mobile Card List ───────────────────────────────────────────────────────── */
+/* Hidden on desktop; shown on mobile/tablet via media query */
+.ip-mobile-list {
+  display: none;
+}
+
+.ip-mobile-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f3f6;
+}
+
+.ip-mobile-card:last-child {
+  border-bottom: none;
+}
+
+.ip-mobile-card__img {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  background: #f1f3f6;
+  flex-shrink: 0;
+  display: block;
+}
+
+.ip-mobile-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ip-mobile-card__name {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1d2e;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  max-width: 100%;
+  /* Show full name as native tooltip via the title attribute */
+  position: relative;
+}
+
+.ip-mobile-card__name:hover { color: #2962ff; }
+
+/* Full-name tooltip on hover — appears above the card name */
+.ip-mobile-card__name::after {
+  content: attr(data-fullname);
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: auto;
+  top: auto;
+  background: #1a1d2e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: normal;
+  max-width: 260px;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ip-mobile-card__name:hover::after {
+  opacity: 1;
+}
+
+.ip-mobile-card__price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.ip-mobile-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Dot Menu ───────────────────────────────────────────────────────────────── */
+.ip-dot-menu { position: relative; }
+
+.ip-dot-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+/* Dropdown escapes any clipping parent via fixed positioning */
+.ip-dropdown {
+  position: fixed;           /* fixed so it's never clipped by overflow:hidden ancestors */
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 150px;
+  z-index: 9999;             /* always on top */
+  overflow: hidden;
+}
+
+.ip-dropdown button {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.ip-dropdown button:hover { background: #f8fafc; }
+.ip-dd-delete { color: #ef4444 !important; }
+.ip-dd-delete:hover { background: #fee2e2 !important; }
+
+/* ─── Empty State ────────────────────────────────────────────────────────────── */
+.ip-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  text-align: center;
+}
+
+.ip-empty-icon { color: #d1d5db; }
+.ip-empty h3   { font-size: 16px; font-weight: 600; color: #1a1d2e; margin: 0; }
+.ip-empty p    { font-size: 13px; color: #9ca3af; margin: 0; max-width: 320px; }
+
+/* ─── Error State ────────────────────────────────────────────────────────────── */
+.ip-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  text-align: center;
+}
+
+.ip-error-icon { color: #f59e0b; }
+.ip-error h3   { font-size: 16px; font-weight: 600; color: #1a1d2e; margin: 0; }
+.ip-error p    { font-size: 13px; color: #6b7280; margin: 0; max-width: 400px; }
+.ip-error-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+
+/* ─── Buttons ────────────────────────────────────────────────────────────────── */
+.ip-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #2962ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ip-btn-primary:hover { background: #1a4fd6; }
+
+.ip-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ip-btn-outline:hover { background: #f8fafc; }
+
+/* ─── Back Button ────────────────────────────────────────────────────────────── */
+.ip-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.ip-back-btn:hover {
+  border-color: #2962ff;
+  color: #2962ff;
+  background: #f0f4ff;
+  transform: translateX(-2px);
+}
+
+/* ─── Pagination ──────────────────────────────────────────────────────────────── */
+.ip-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-top: 1px solid #e5e7eb;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ip-pagination-info {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.ip-pagination-info span { font-weight: 600; color: #374151; }
+
+.ip-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.ip-page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ip-page-btn:hover:not(:disabled) { background: #f1f3f6; }
+.ip-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ip-page-indicator {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ip-page-indicator span { font-weight: 600; color: #374151; }
+
+/* ─── Skeletons ──────────────────────────────────────────────────────────────── */
+.ip-skeleton {
+  background: linear-gradient(90deg, #f1f3f6 25%, #e8eaf0 50%, #f1f3f6 75%);
+  background-size: 200% 100%;
+  animation: ip-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+
+.ip-skeleton-img   { width: 48px; height: 48px; border-radius: 8px; }
+.ip-skeleton-text  { height: 14px; min-width: 40px; }
+.ip-skeleton-badge { height: 22px; width: 64px; border-radius: 20px; }
+
+@keyframes ip-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Modal Overlay ──────────────────────────────────────────────────────────── */
+.ip-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.ip-modal-card {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 760px;
+  max-height: 88vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+}
+
+.ip-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.ip-modal-close:hover { background: #f1f3f6; color: #374151; }
+
+.ip-modal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 16px;
+}
+
+.ip-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2962ff;
+  border-radius: 50%;
+  animation: ip-spin 0.7s linear infinite;
+}
+
+@keyframes ip-spin { to { transform: rotate(360deg); } }
+
+.ip-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 24px;
+  text-align: center;
+  color: #f59e0b;
+}
+
+.ip-modal-error h3 { color: #1a1d2e; margin: 0; }
+.ip-modal-error p  { color: #6b7280; margin: 0; font-size: 13px; }
+
+.ip-modal-content { padding: 28px; }
+
+.ip-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 24px;
+}
+
+.ip-modal-body {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.ip-modal-gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.ip-modal-img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f1f3f6;
+}
+
+.ip-modal-status { margin-top: 4px; }
+
+.ip-modal-info { flex: 1; min-width: 200px; }
+
+.ip-modal-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 16px;
+}
+
+.ip-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.ip-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ip-modal-label {
+  font-size: 11px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ip-modal-value           { font-size: 13px; font-weight: 500; color: #374151; }
+.ip-modal-value--id       { font-family: "SF Mono", monospace; font-size: 11px; color: #6b7280; }
+.ip-modal-value--final    { color: #059669; font-weight: 700; }
+.ip-modal-value--discount { color: #f59e0b; }
+
+.ip-modal-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ip-modal-desc p {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ip-modal-footer {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Tablet & Mobile  (≤ 1023px)
+   Layout mirrors MyListings exactly:
+     Row 1: Search (full width)
+     Row 2: All Status | All Prices | Refresh
+   Card list replaces table.
+════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .ip-root { padding: 16px; }
+
+  /* Header becomes a single column */
+  .ip-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ip-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* Search — row 1 — full width */
+  .ip-search-wrap {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ip-search { width: 100%; }
+
+  /* All Status & All Prices dropdowns — row 2 */
+  .ip-controls .ip-select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Refresh — row 3 — full width */
+  .ip-btn-refresh {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+    padding: 7px 12px;
+  }
+
+  /* Hide desktop table */
+  .ip-table-wrap { display: none; }
+
+  /* Show mobile card list */
+  .ip-mobile-list { display: block; }
+
+  /* Pagination: info above, controls below, each full-width */
+  .ip-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .ip-pagination-info {
+    text-align: center;
+  }
+
+  .ip-pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  /* Both page buttons — compact base */
+  .ip-page-btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 3px;
+    justify-content: center;
+  }
+
+  /* Previous button — icon only, hide the "Previous" text */
+  .ip-page-btn-prev-label {
+    display: none;
+  }
+
+  .ip-page-btn:first-child {
+    padding: 6px 8px;
+    min-width: 32px;
+  }
+
+  .ip-page-indicator {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Modal adjustments */
+  .ip-modal-body   { flex-direction: column; }
+  .ip-modal-img    { width: 100%; height: 200px; }
+  .ip-modal-grid   { grid-template-columns: 1fr; }
+
+  .ip-name-btn { max-width: 100%; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DESKTOP (≥ 1025px) — ensure mobile list is never shown
+ ════════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  .ip-mobile-list { display: none !important; }
+  .ip-table-wrap  { display: block; }
+}
+/* Append these styles to the bottom of your InProgressListings.css */
+
+.ip-modal-gallery-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  width: 260px;
+}
+.ip-modal-thumbnails { display: flex; flex-wrap: wrap; gap: 6px; }
+.ip-modal-thumb {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, opacity 0.15s;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+.ip-modal-thumb:hover { opacity: 1; border-color: #4a90e2; }
+.ip-modal-thumb--active { opacity: 1; border-color: #4a90e2; }
+.ip-modal-promo-section { margin-top: 4px; }
+.ip-modal-promo-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a92a0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.ip-modal-brand { font-size: 13px; color: #6b7280; margin: 2px 0 12px; font-weight: 500; }
+.ip-modal-section { border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+.ip-modal-section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.ip-modal-section-header:hover { background: #f0f2f5; }
+.ip-modal-section-title { font-size: 13px; font-weight: 600; color: #374151; margin: 0; }
+.ip-modal-section-body { padding: 12px 14px; }
+.ip-modal-subsection-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 10px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ip-modal-variant-table-wrap { margin-top: 4px; }
+.ip-modal-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ip-modal-variant-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.ip-modal-variant-table th {
+  background: #f1f3f6;
+  color: #374151;
+  font-weight: 600;
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+.ip-modal-variant-table td { padding: 5px 10px; border-bottom: 1px solid #f1f3f6; color: #4b5563; }
+.ip-modal-variant-table tr:last-child td { border-bottom: none; }
+.ip-modal-option-group { margin-bottom: 10px; }
+.ip-modal-option-group:last-child { margin-bottom: 0; }
+.ip-modal-option-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ip-modal-option-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ip-modal-option-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f1f3f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+.ip-modal-info-block { padding: 10px 0; border-bottom: 1px solid #f1f3f6; }
+.ip-modal-info-block:last-child { border-bottom: none; padding-bottom: 0; }
+.ip-modal-info-block-title { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+.ip-modal-info-block-body { font-size: 13px; color: #4b5563; line-height: 1.6; }
+.ip-modal-info-block-body p { margin: 0 0 4px; }
+.ip-modal-size-chart { max-width: 100%; border-radius: 8px; border: 1px solid #e9ecef; }
+.ip-modal-return-text { font-size: 13px; color: #4b5563; line-height: 1.6; margin: 0; }
+.ip-modal-keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+.ip-modal-keyword-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #e8f0fe;
+  border: 1px solid #c7d7f8;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #1a56db;
+  font-weight: 500;
+}
+@media (max-width: 640px) {
+  .ip-modal-gallery-col { width: 100%; }
+  .ip-modal-body { flex-direction: column; }
+  .ip-modal-thumb { width: 64px; height: 64px; }
+  .ip-modal-img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+    background: #f8fafc;
+  }
+  .ip-modal-card {
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+  .ip-modal-content {
+    padding: 16px;
+  }
+}
