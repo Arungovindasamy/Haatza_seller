@@ -1,0 +1,593 @@
+.settlements-page-root {
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f6fa;
+  box-sizing: border-box;
+}
+
+.settlements-page-header {
+  margin-bottom: 24px;
+}
+
+.settlements-page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1d23;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.settlements-page-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Alert Banner */
+.settlements-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #b91c1c;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.settlements-alert-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: 600;
+  color: #b91c1c;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.settlements-alert-close:hover {
+  opacity: 1;
+}
+
+/* Card & Body */
+.settlements-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f1f3f6;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  overflow: visible; /* To allow floating datepicker popover */
+}
+
+.settlements-card-body {
+  padding: 24px;
+}
+
+/* Filters Row */
+.settlements-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.settlements-page-root .search-bar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 280px;
+  max-width: 420px;
+}
+
+.settlements-page-root .search-icon {
+  position: absolute;
+  left: 14px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.settlements-page-root .search-input {
+  width: 100%;
+  padding: 11px 12px 11px 44px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  color: #1f2937;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.settlements-page-root .search-input:focus {
+  border-color: #2962ff;
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.1);
+}
+
+/* Date filter container and dropdown button */
+.date-filter-container {
+  position: relative;
+}
+
+.btn-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-date-filter:hover {
+  background: #f9fafb;
+  border-color: #c4c6cc;
+}
+
+.btn-date-filter .chevron {
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.btn-date-filter .chevron.rotate {
+  transform: rotate(180deg);
+}
+
+/* Datepicker Popover */
+.datepicker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  width: 290px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.calendar-month-year {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.btn-nav-cal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #4b5563;
+  transition: background-color 0.2s;
+}
+
+.btn-nav-cal:hover {
+  background: #f3f4f6;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.weekday-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.calendar-day-empty {
+  height: 32px;
+}
+
+.calendar-day-btn {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.calendar-day-btn:hover {
+  background: #f3f4f6;
+}
+
+.calendar-day-btn--active {
+  background: #2962ff !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.datepicker-footer {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 12px;
+}
+
+.datepicker-btn-confirm {
+  width: 100%;
+  padding: 9px;
+  background: #2962ff;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.datepicker-btn-confirm:hover {
+  background: #1565c0;
+}
+
+/* Refresh Button */
+.btn-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+/* Tabs */
+.settlements-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+
+.settlements-tab-btn {
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settlements-tab-btn:hover {
+  color: #1f2937;
+}
+
+.settlements-tab-btn--active {
+  border-bottom-color: #2962ff;
+  color: #2962ff !important;
+}
+
+/* Loading & Empty State */
+.settlements-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.settlements-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3.5px solid #f3f3f3;
+  border-top: 3.5px solid #2962ff;
+  border-radius: 50%;
+  animation: settlements-spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes settlements-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.settlements-loading p {
+  font-size: 14.5px;
+  color: #4b5563;
+  margin: 0;
+  font-weight: 500;
+}
+
+.settlements-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.empty-icon {
+  color: #9ca3af;
+  margin-bottom: 14px;
+}
+
+.settlements-empty h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 6px 0;
+}
+
+.settlements-empty p {
+  font-size: 13.5px;
+  color: #6b7280;
+  margin: 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* Table styling */
+.settlements-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.settlements-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.settlements-table th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #4b5563;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.settlements-table td {
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
+  vertical-align: middle;
+}
+
+.settlements-table tbody tr:hover {
+  background-color: #fafbfc;
+}
+
+/* Badge */
+.settlement-status-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: 50px;
+}
+
+/* Buttons */
+.btn-view-details {
+  background: none;
+  border: 1px solid #2962ff;
+  color: #2962ff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view-details:hover {
+  background: #2962ff;
+  color: #fff;
+}
+
+/* Utility Helpers */
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.text-gray-800 { color: #1f2937; }
+.text-emerald-600 { color: #059669; }
+
+/* Modal overlay & card */
+.settlements-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+  padding: 16px;
+}
+
+.settlements-modal-card {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: settlements-modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes settlements-modal-in {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.settlements-modal-card .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.settlements-modal-card .modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.settlements-modal-card .btn-close-modal {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.settlements-modal-card .btn-close-modal:hover {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.settlements-modal-card .modal-body {
+  padding: 24px;
+}
+
+.settlements-modal-card .modal-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.settlements-modal-card .modal-info-row .info-label {
+  color: #4b5563;
+}
+
+.settlements-modal-card .modal-info-row .info-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.settlements-modal-card .modal-divider {
+  height: 1px;
+  background-color: #f3f4f6;
+  margin: 16px 0;
+}
+
+.settlements-modal-card .debit-row {
+  margin-bottom: 8px;
+}
+
+.settlements-modal-card .debit-row .info-value {
+  color: #1f2937;
+}
+
+.settlements-modal-card .settlement-row {
+  margin-bottom: 0;
+  margin-top: 14px;
+  font-size: 16px;
+  padding-top: 4px;
+}
+
+.settlements-modal-card .settlement-row .info-label {
+  font-weight: 700;
+}
+
+.settlements-modal-card .settlement-row .info-value {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* Tablet adjustments */
+@media (max-width: 640px) {
+  .settlements-page-root {
+    padding: 16px;
+  }
+  
+  .settlements-card-body {
+    padding: 16px;
+  }
+  
+  .settlements-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-bar-wrapper {
+    max-width: none;
+  }
+  
+  .date-filter-container, .datepicker-popover {
+    width: 100%;
+  }
+  
+  .btn-date-filter {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

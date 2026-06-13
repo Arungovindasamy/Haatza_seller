@@ -1,0 +1,148 @@
+.inv-page-root {
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f6fa;
+  box-sizing: border-box;
+}
+
+.inv-page-header {
+  margin-bottom: 24px;
+}
+
+.inv-page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1d23;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.inv-page-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.inv-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #f1f3f6;
+}
+
+.inv-card-body {
+  padding: 24px;
+}
+
+/* Tabs Section */
+.inv-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1.5px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.inv-tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+  outline: none;
+}
+
+.inv-tab-btn:hover {
+  color: #2962ff;
+}
+
+.inv-tab-btn--active {
+  color: #2962ff;
+}
+
+.inv-tab-btn--active::after {
+  content: "";
+  position: absolute;
+  bottom: -1.5px;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: #2962ff;
+  border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+  .inv-page-root {
+    padding: 16px;
+  }
+  
+  .inv-card-body {
+    padding: 16px;
+  }
+
+  .inv-tabs {
+    gap: 16px;
+  }
+
+  .inv-tab-btn {
+    font-size: 13px;
+    padding: 10px 2px;
+  }
+}
+
+/* Table Loading */
+.inv-table-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #6b7280;
+}
+
+.inv-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3.5px solid #f3f4f6;
+  border-top: 3.5px solid #2962ff;
+  border-radius: 50%;
+  animation: inv-spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes inv-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Alert Banner */
+.inv-alert-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.05);
+}
+
+.inv-alert-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #d97706;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}

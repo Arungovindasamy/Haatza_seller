@@ -6,15 +6,20 @@
 
 .main-content {
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 100vh;
-  padding: 80px 24px 24px; /* Space for navbar + content padding */
+  min-height: calc(100vh - var(--navbar-height, 70px));
+  padding: calc(var(--navbar-height, 70px) + 24px) 24px 24px;
   overflow-y: auto;
   overflow-x: hidden;
   height: 100vh;
+  background-color: #f5f7ff;
 }
 
 .sidebar-open .main-content {
-  margin-left: 320px; /* Matches --sidebar-width */
+  margin-left: var(--sidebar-width, 320px);
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: var(--sidebar-width-mini, 72px);
 }
 
 @media (max-width: 1024px) {

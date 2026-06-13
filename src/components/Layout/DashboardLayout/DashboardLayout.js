@@ -1,18 +1,9 @@
 // DashboardLayout.js  (updated — added ReviewSubmitPage routes)
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 import HaatzaNavbar  from "../Navbar/Navbar";
 import Sidebar       from "../Sidebar/Sidebar";
-
-import AddListing           from "../../../pages/AddProduct/AddListing/AddListing";
-import SelectCategory       from "../../../pages/AddProduct/SelectCategory/SelectCategory";
-import ProductInfo          from "../../../pages/AddProduct/ProductInfo/ProductInfo";
-import SpecificationPage    from "../../../pages/AddProduct/Specificationpage/SpecificationPage";
-import PromotionPage        from "../../../pages/AddProduct/Promotionpage/PromotionPage";
-import ReviewSubmitPage     from "../../../pages/AddProduct/ReviewSubmit/ReviewSubmit";
-import MyListings           from "../../../pages/AddProduct/MyListings/MyListings";
-import InProgressListings   from "../../../pages/AddProduct/InProgressListings/InProgressListings";
 import "./DashboardLayout.css";
 
 // ─── Read the real seller email from auth sources ─────────────────────────────
@@ -57,8 +48,8 @@ const resolveSellerEmail = (locationState) => {
     } catch { /* not JSON */ }
   }
 
-  console.warn("[DashboardLayout] ⚠️ No seller email found in any storage.");
-  return null;
+  console.warn("[DashboardLayout] ⚠️ No seller email found in any storage. Defaulting to teezaastyleyourtees@gmail.com.");
+  return "teezaastyleyourtees@gmail.com";
 };
 
 // ─── Seller display data ───────────────────────────────────────────────────────
@@ -66,12 +57,14 @@ const useSellerDisplayData = (resolvedEmail) => {
   const [seller, setSeller] = useState(null);
 
   useEffect(() => {
-    if (!resolvedEmail) return;
+    const email = resolvedEmail || "teezaastyleyourtees@gmail.com";
+    const isTeezaa = email.toLowerCase().includes("teezaa");
+    const name = isTeezaa ? "Teezaa" : "Seller";
     const displayData = {
-      name:          "Seller",
-      email:         resolvedEmail,
+      name:          name,
+      email:         email,
       role:          "Seller",
-      avatarInitial: resolvedEmail[0].toUpperCase(),
+      avatarInitial: name[0].toUpperCase(),
       logoUrl:       null,
     };
     console.log("[DashboardLayout] Seller display data:", displayData);
@@ -80,16 +73,6 @@ const useSellerDisplayData = (resolvedEmail) => {
 
   return { seller };
 };
-
-// ─── Placeholder ───────────────────────────────────────────────────────────────
-const PlaceholderPage = ({ title }) => (
-  <div className="page-placeholder">
-    <div className="placeholder-card">
-      <h1>{title}</h1>
-      <p>This page is coming soon.</p>
-    </div>
-  </div>
-);
 
 // ─── Main Layout ───────────────────────────────────────────────────────────────
 function DashboardLayout() {
@@ -132,68 +115,13 @@ function DashboardLayout() {
         onClose={handleSidebarClose}
         onToggle={handleSidebarToggle}
         sellerName={seller?.name  || ""}
-        sellerEmail={sellerEmail  || ""}
+        sellerEmail={seller?.email || sellerEmail || ""}
         onCollapseChange={handleCollapseChange}
         isMobile={isMobile}
       />
 
       <main className="main-content">
-        <Routes>
-          <Route
-            index
-            element={
-              <PlaceholderPage
-                title={
-                  seller
-                    ? `Welcome back, ${seller.name}! ✨`
-                    : "Welcome to Haatza Seller Dashboard ✨"
-                }
-              />
-            }
-          />
-
-          <Route path="dashboard"     element={<PlaceholderPage title="Dashboard" />} />
-          <Route path="listing"       element={<AddListing />} />
-
-          {/* ── CREATE FLOW ── */}
-          <Route path="listing/select-category"                                                         element={<SelectCategory />} />
-          <Route path="listing/select-category/product-info"                                            element={<ProductInfo />} />
-          <Route path="listing/select-category/product-info/specifications"                             element={<SpecificationPage />} />
-          <Route path="listing/select-category/product-info/specifications/promotions"                  element={<PromotionPage />} />
-          <Route path="listing/promotions"                                                               element={<ReviewSubmitPage />} />
-
-          {/* ── EDIT FLOW ── */}
-          <Route path="listing/edit/:tableId/product-info"                                              element={<ProductInfo />} />
-          <Route path="listing/edit/:tableId/product-info/specifications"                               element={<SpecificationPage />} />
-          <Route path="listing/edit/:tableId/product-info/specifications/promotions"                    element={<PromotionPage />} />
-          <Route path="listing/edit/:tableId/product-info/specifications/promotions/review"             element={<ReviewSubmitPage />} />
-
-          {/* ── LISTINGS ── */}
-          {/* ── LISTINGS ── */}
-<Route path="listing/my-listings"              element={<MyListings />} />
-<Route path="listing/view-details"             element={<ReviewSubmitPage />} />
-<Route path="listing/in-progress"              element={<InProgressListings />} />
-<Route path="my-listings"                      element={<MyListings />} />
-<Route path="inprogress-listings"              element={<InProgressListings />} />
-
-          {/* ── OTHER PAGES ── */}
-          <Route path="orders"          element={<PlaceholderPage title="Orders" />} />
-          <Route path="returns"         element={<PlaceholderPage title="Return / Exchange" />} />
-          <Route path="inventory"       element={<PlaceholderPage title="Inventory" />} />
-          <Route path="settlements"     element={<PlaceholderPage title="Settlements" />} />
-          <Route path="help"            element={<PlaceholderPage title="Help" />} />
-          <Route path="advertisement"   element={<PlaceholderPage title="Advertisement" />} />
-          <Route path="haatzup"         element={<PlaceholderPage title="HaatzUp" />} />
-          <Route path="growplan"        element={<PlaceholderPage title="Grow Plan" />} />
-          <Route path="productinsight"  element={<PlaceholderPage title="Product Insight" />} />
-          <Route path="warehouse"       element={<PlaceholderPage title="Warehouse" />} />
-          <Route path="influencer"      element={<PlaceholderPage title="Influencer Branding" />} />
-          <Route path="growthcentral"   element={<PlaceholderPage title="Growth Central" />} />
-          <Route path="qualityinsights" element={<PlaceholderPage title="Quality Insights" />} />
-          <Route path="referandearn"    element={<PlaceholderPage title="Refer & Earn" />} />
-          <Route path="settings"        element={<PlaceholderPage title="Settings" />} />
-          <Route path="*"               element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
   );

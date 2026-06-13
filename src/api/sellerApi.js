@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const BASE_URL = "https://www.haatzaseller.com/_functions";
 
 // ─── Check Seller (Login) ────────────────────────────────────────────────────
@@ -38,3 +40,19 @@ export const checkSeller = async (contact) => {
     phone: data.message.phone || "",
   };
 };
+
+// ─── Fetch Seller Details ────────────────────────────────────────────────────
+// Fetches the seller profile data by email
+export const fetchSellerDetails = async (email) => {
+  if (!email) throw new Error("Email is required.");
+  try {
+    const response = await axios.get(`${BASE_URL}/sellerdata`, {
+      params: { email },
+      timeout: 10000,
+    });
+    return response.data;
+  } catch (err) {
+    console.error("[fetchSellerDetails] Error:", err);
+    throw new Error(err.response?.data?.message || "Failed to fetch seller details.");
+  }
+};

@@ -4,25 +4,25 @@ import ReactDOM from "react-dom";
 import "./Sidebar.css";
 
 const KEY_TO_ROUTE = {
-  dashboard:       "/dashboard",
-  orders:          "/dashboard/orders",
-  returns:         "/dashboard/returns",
-  listing:         "/dashboard/listing",
-  inventory:       "/dashboard/inventory",
-  settlements:     "/dashboard/settlements",
-  help:            "/dashboard/help",
-  advertisement:   "/dashboard/advertisement",
-  haatzup:         "/dashboard/haatzup",
-  growplan:        "/dashboard/growplan",
-  productinsight:  "/dashboard/productinsight",
-  warehouse:       "/dashboard/warehouse",
-  influencer:      "/dashboard/influencer",
-  growthcentral:   "/dashboard/growthcentral",
-  qualityinsights: "/dashboard/qualityinsights",
-  referandearn:    "/dashboard/referandearn",
-  settings:        "/dashboard/settings",
+  dashboard: "/dashboard",
+  orders: "/orders",
+  returns: "/return-exchange",
+  listing: "/listing",
+  inventory: "/inventory",
+  settlements: "/settlements",
+  help: "/help",
+  advertisement: "/advertisement",
+  haatzup: "/haatzup",
+  growplan: "/growplan",
+  productinsight: "/productinsight",
+  warehouse: "/warehouse",
+  influencer: "/influencer",
+  growthcentral: "/growthcentral",
+  qualityinsights: "/qualityinsights",
+  referandearn: "/referandearn",
+  settings: "/settings",
 };
- 
+
 /* Reverse map — lets active highlight follow the URL automatically */
 const ROUTE_TO_KEY = Object.fromEntries(
   Object.entries(KEY_TO_ROUTE).map(([k, v]) => [v, k])
@@ -33,7 +33,7 @@ const ROUTE_TO_KEY = Object.fromEntries(
    ───────────────────────────────────────────────────────────── */
 const NAV_SECTIONS = [
   {
-    heading: "Manage Business",
+    heading: "MANAGE BUSINESS",
     items: [
       {
         key: "orders", label: "Orders", badge: "12",
@@ -82,80 +82,6 @@ const NAV_SECTIONS = [
           React.createElement("circle", { cx: "12", cy: "12", r: "10" }),
           React.createElement("path", { d: "M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" }),
           React.createElement("line", { x1: "12", y1: "17", x2: "12.01", y2: "17" })
-        ),
-      },
-    ],
-  },
-  {
-    heading: "Boost Sales",
-    items: [
-      {
-        key: "advertisement", label: "Advertisement",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }),
-          React.createElement("path", { d: "M19.07 4.93a10 10 0 010 14.14" }),
-          React.createElement("path", { d: "M15.54 8.46a5 5 0 010 7.07" })
-        ),
-      },
-      {
-        key: "haatzup", label: "HaatzUp",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polyline", { points: "23 6 13.5 15.5 8.5 10.5 1 18" }),
-          React.createElement("polyline", { points: "17 6 23 6 23 12" })
-        ),
-      },
-      {
-        key: "growplan", label: "Grow Plan", badge: "Pro", badgeType: "pro",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("circle", { cx: "12", cy: "12", r: "10" }),
-          React.createElement("path", { d: "M12 8l4 4-4 4-4-4 4-4z" })
-        ),
-      },
-      {
-        key: "productinsight", label: "Product Insight",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("line", { x1: "18", y1: "20", x2: "18", y2: "10" }),
-          React.createElement("line", { x1: "12", y1: "20", x2: "12", y2: "4" }),
-          React.createElement("line", { x1: "6", y1: "20", x2: "6", y2: "14" })
-        ),
-      },
-      {
-        key: "warehouse", label: "Warehouse",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("path", { d: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" }),
-          React.createElement("polyline", { points: "9 22 9 12 15 12 15 22" })
-        ),
-      },
-      {
-        key: "influencer", label: "Influencer Branding",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("path", { d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" }),
-          React.createElement("circle", { cx: "9", cy: "7", r: "4" }),
-          React.createElement("path", { d: "M23 21v-2a4 4 0 00-3-3.87" }),
-          React.createElement("path", { d: "M16 3.13a4 4 0 010 7.75" })
-        ),
-      },
-      {
-        key: "growthcentral", label: "Growth Central",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polyline", { points: "22 12 18 12 15 21 9 3 6 12 2 12" })
-        ),
-      },
-      {
-        key: "qualityinsights", label: "Quality Insights",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("circle", { cx: "12", cy: "8", r: "6" }),
-          React.createElement("path", { d: "M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" })
-        ),
-      },
-      {
-        key: "referandearn", label: "Refer & Earn",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polyline", { points: "20 12 20 22 4 22 4 12" }),
-          React.createElement("rect", { x: "2", y: "7", width: "20", height: "5" }),
-          React.createElement("line", { x1: "12", y1: "22", x2: "12", y2: "7" }),
-          React.createElement("path", { d: "M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" }),
-          React.createElement("path", { d: "M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" })
         ),
       },
     ],
@@ -214,8 +140,8 @@ const ChevronRightIcon = () =>
    ───────────────────────────────────────────────────────────── */
 function SidebarTooltip({ label, anchorRect, visible }) {
   const tooltipRef = useRef(null);
-  const [coords, setCoords]   = useState({ top: 0, left: 0 });
-  const [ready,  setReady]    = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!anchorRect) { setReady(false); return; }
@@ -225,7 +151,7 @@ function SidebarTooltip({ label, anchorRect, visible }) {
     // Estimated height before first render; actual height used after mount
     const estimatedH = tooltipRef.current ? tooltipRef.current.offsetHeight : 36;
 
-    const rawTop  = anchorRect.top  + anchorRect.height / 2 - estimatedH / 2;
+    const rawTop = anchorRect.top + anchorRect.height / 2 - estimatedH / 2;
     const rawLeft = anchorRect.right + GAP;
 
     // Clamp vertically inside the viewport
@@ -241,9 +167,9 @@ function SidebarTooltip({ label, anchorRect, visible }) {
     React.createElement(
       "div",
       {
-        ref:          tooltipRef,
-        className:    ["sidebar-tooltip", visible && ready ? "sidebar-tooltip--visible" : ""].filter(Boolean).join(" "),
-        style:        { top: coords.top, left: coords.left },
+        ref: tooltipRef,
+        className: ["sidebar-tooltip", visible && ready ? "sidebar-tooltip--visible" : ""].filter(Boolean).join(" "),
+        style: { top: coords.top, left: coords.left },
         "aria-hidden": "true",
       },
       /* Left-pointing caret */
@@ -280,7 +206,7 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
   const handleTouchStart = useCallback((e) => {
     if (!isCollapsed || !onTooltipShow || !isTouchDevice.current) return;
     e.preventDefault(); // Prevent scroll interference
-    
+
     const rect = btnRef.current?.getBoundingClientRect();
     if (rect) {
       onTooltipShow(item.label, rect, item.key);
@@ -297,30 +223,30 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
   return React.createElement(
     "button",
     {
-      ref:          btnRef,
-      className:    [
+      ref: btnRef,
+      className: [
         "nav-item",
-        active      ? "nav-item--active"    : "",
-        item.danger ? "nav-item--danger"    : "",
+        active ? "nav-item--active" : "",
+        item.danger ? "nav-item--danger" : "",
         isCollapsed ? "nav-item--icon-only" : "",
         tooltipActiveKey === item.key ? "nav-item--tooltip-active" : "",
       ].filter(Boolean).join(" "),
-      onClick:      (e) => {
+      onClick: (e) => {
         e.stopPropagation();
         if (onClick) onClick(item.key);
       },
       onMouseEnter: handleMouseEnter,
       onMouseLeave: handleMouseLeave,
       onTouchStart: handleTouchStart,
-      onTouchEnd:   handleTouchEnd,
+      onTouchEnd: handleTouchEnd,
       "aria-label": item.label,
     },
     React.createElement("span", { className: "nav-item__icon" }, item.icon),
     !isCollapsed && React.createElement("span", { className: "nav-item__label" }, item.label),
     !isCollapsed && item.badge &&
-      React.createElement("span", {
-        className: `nav-item__badge${item.badgeType === "pro" ? " nav-item__badge--pro" : ""}`,
-      }, item.badge)
+    React.createElement("span", {
+      className: `nav-item__badge${item.badgeType === "pro" ? " nav-item__badge--pro" : ""}`,
+    }, item.badge)
   );
 }
 
@@ -354,8 +280,8 @@ function SellerProfile({ sellerName = "", sellerEmail = "", onProfileClick, isCo
         React.createElement("p", { className: "profile__email" }, sellerEmail || "seller@haatza.com"),
         React.createElement("button", {
           className: "profile__action-btn",
-          title:     "View Store Profile",
-          onClick:   onProfileClick,
+          title: "View Store Profile",
+          onClick: onProfileClick,
         },
           React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" }),
@@ -372,37 +298,37 @@ function SellerProfile({ sellerName = "", sellerEmail = "", onProfileClick, isCo
    SIDEBAR
    ───────────────────────────────────────────────────────────── */
 function Sidebar({
-  sellerName     = "",
-  sellerEmail    = "",
-  onProfileClick = () => {},
+  sellerName = "",
+  sellerEmail = "",
+  onProfileClick = () => { },
   onCollapseChange,
 }) {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768
   );
 
   const activeKey = (() => {
-  const path = location.pathname;
+    const path = location.pathname;
 
-  if (
-    path.includes("/listing") ||
-    path.includes("/my-listings") ||
-    path.includes("/inprogress-listings")
-  ) {
-    return "listing";
-  }
+    if (
+      path.includes("/listing") ||
+      path.includes("/my-listings") ||
+      path.includes("/inprogress-listings")
+    ) {
+      return "listing";
+    }
 
-  return ROUTE_TO_KEY[path] ?? "dashboard";
-})();
+    return ROUTE_TO_KEY[path] ?? "dashboard";
+  })();
 
   /* ── Tooltip state ────────────────────────────────────────── */
-  const [tooltip, setTooltip] = useState({ 
-    label: "", 
-    anchorRect: null, 
+  const [tooltip, setTooltip] = useState({
+    label: "",
+    anchorRect: null,
     visible: false,
-    activeKey: null 
+    activeKey: null
   });
   const hideTimer = useRef(null);
   const isTouchDevice = useRef(false);
@@ -485,9 +411,9 @@ function Sidebar({
   /* ── Breakpoint listener ──────────────────────────────────── */
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
-    const onBreakpoint = (e) => { 
+    const onBreakpoint = (e) => {
+      setIsCollapsed(e.matches);
       if (e.matches) {
-        setIsCollapsed(true);
         // Hide tooltip on mobile collapse
         setTooltip({ label: "", anchorRect: null, visible: false, activeKey: null });
       }
@@ -500,29 +426,29 @@ function Sidebar({
     if (typeof onCollapseChange === "function") onCollapseChange(isCollapsed);
   }, [isCollapsed, onCollapseChange]);
 
-  const handleToggle       = useCallback(() => setIsCollapsed(prev => !prev), []);
-    const handleItemClick = useCallback((key) => {
+  const handleToggle = useCallback(() => setIsCollapsed(prev => !prev), []);
+  const handleItemClick = useCallback((key) => {
     const route = KEY_TO_ROUTE[key];
     if (route) navigate(route);
   }, [navigate]);
-  const handleProfileClick = useCallback((e) => { 
-    e.stopPropagation(); 
-    onProfileClick(); 
+  const handleProfileClick = useCallback((e) => {
+    e.stopPropagation();
+    onProfileClick();
   }, [onProfileClick]);
 
   const getToggleLeft = useCallback(() => {
     if (isCollapsed) return "72px";
     const w = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width").trim();
-    return w || "320px";
+    return w || "380px";
   }, [isCollapsed]);
 
   /* Tooltip callbacks — only wired when sidebar is actually collapsed */
   const tooltipCallbacks = isCollapsed
-    ? { 
-        onTooltipShow: handleTooltipShow, 
-        onTooltipHide: handleTooltipHide,
-        tooltipActiveKey: tooltip.activeKey
-      }
+    ? {
+      onTooltipShow: handleTooltipShow,
+      onTooltipHide: handleTooltipHide,
+      tooltipActiveKey: tooltip.activeKey
+    }
     : {};
 
   /* ── Sidebar content ──────────────────────────────────────── */
@@ -568,11 +494,11 @@ function Sidebar({
     React.createElement(
       "button",
       {
-        className:    "sidebar__external-toggle",
-        style:        { left: getToggleLeft() },
-        onClick:      handleToggle,
+        className: "sidebar__external-toggle",
+        style: { left: getToggleLeft() },
+        onClick: handleToggle,
         "aria-label": isCollapsed ? "Expand sidebar" : "Collapse sidebar",
-        title:        isCollapsed ? "Expand sidebar" : "Collapse sidebar",
+        title: isCollapsed ? "Expand sidebar" : "Collapse sidebar",
       },
       isCollapsed ? React.createElement(ChevronRightIcon) : React.createElement(ChevronLeftIcon)
     ),

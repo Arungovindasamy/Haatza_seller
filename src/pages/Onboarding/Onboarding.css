@@ -22,17 +22,8 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
+.ob-shell {
   font-family: 'DM Sans', 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text-primary);
-  height: 100%;
-  overflow: hidden;
-}
-.ob-shell,
-.ob-shell * {
-  color: revert;
-  background: revert;
 }
 
 .ob-shell {
