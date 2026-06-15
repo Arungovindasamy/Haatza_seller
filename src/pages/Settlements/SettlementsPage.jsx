@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, Calendar, ChevronDown, X, Info, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { sellerService } from "../../services/sellerService";
-import { getSellerId } from "../../utils/sellerSession";
+import { resolveSellerId } from "../../utils/sellerSession";
 import "./SettlementsPage.css";
 
 const SettlementsPage = () => {
-  const sellerId = useMemo(() => getSellerId(), []);
-
   const [rawTransactions, setRawTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("previous"); // "upcoming" or "previous"
   const [selectedTx, setSelectedTx] = useState(null);
+  const [settlementSummary, setSettlementSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   
   // Date Picker Modal State
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -21,12 +21,21 @@ const SettlementsPage = () => {
 
   // Fetch data
   const loadSettlements = useCallback(async () => {
+    const resolvedSellerId = (resolveSellerId() || "").trim();
+    if (!resolvedSellerId || resolvedSellerId === "null" || resolvedSellerId === "undefined") {
+      console.warn("[SettlementsPage] Missing sellerId. API call skipped.");
+      setError("Seller session not found. Please login again.");
+      setRawTransactions([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const response = await sellerService.getTransactionHistory(sellerId);
-      const list = response?.message?.transactions || response?.transactions || [];
-      setRawTransactions(list);
+      const response = await sellerService.getSellerPayments(resolvedSellerId);
+      const list = response?.message?.data || response?.data || response?.message || response || [];
+      setRawTransactions(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error("[SettlementsPage] Load error:", err);
       setError(err.message || "Failed to load settlements from server.");
@@ -34,7 +43,7 @@ const SettlementsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sellerId]);
+  }, []);
 
   useEffect(() => {
     loadSettlements();
@@ -58,21 +67,16 @@ const SettlementsPage = () => {
     return rawTransactions.map((tx, idx) => {
       // Create pseudo-ID derived from index/date if missing to look exactly like the screenshot
       const orderId = tx.orderId || tx.order_id || tx.id || `10${340 + (idx * 3) % 45}`;
-      const amount = tx.amount || 0;
+      const amount = Number(tx.amount || tx.settlementAmount || 0);
       const dateVal = tx.paymentDate || tx.createdDate || tx.date;
       const status = tx.status || "Paid";
       const type = tx.type || "Debit";
       
-      // Calculate modal details
-      const settlementAmt = amount;
-      const shippingFee = 88.98;
-      const shippingGst = 16.02;
-      const rtoPenalty = null;
-      const productGst = Number((settlementAmt * 0.07).toFixed(2));
-      const totalDebit = Number((productGst + shippingFee + shippingGst).toFixed(2));
-      const orderAmount = Number((settlementAmt + totalDebit).toFixed(2));
+      const categoryId = tx.categoryId || tx.category_id || tx.category || "";
+      const deliveryCharges = tx.deliveryCharges ?? tx.delivery_charges ?? tx.deliveryCharge ?? true;
+      const shippingWeight = tx.shippingWeight ?? tx.shipping_weight ?? tx.weight ?? 0;
 
-      // Separate into upcoming vs previous based on date (arbitrary boundary of June 15, 2026 for demo data mapping, or past/future)
+      // Separate into upcoming vs previous based on date
       const txDate = dateVal ? new Date(dateVal) : new Date();
       const isUpcoming = txDate > new Date("2026-06-15T00:00:00Z");
 
@@ -85,14 +89,9 @@ const SettlementsPage = () => {
         status,
         type,
         isUpcoming,
-        // Modal detailed breakdown
-        orderAmount,
-        productGst,
-        shippingFee,
-        shippingGst,
-        rtoPenalty,
-        totalDebit,
-        settlementAmount: settlementAmt
+        categoryId,
+        deliveryCharges,
+        shippingWeight,
       };
     });
   }, [rawTransactions]);
@@ -112,12 +111,81 @@ const SettlementsPage = () => {
     });
   }, [mappedTransactions, activeTab, search]);
 
-  const handleOpenDetails = (tx) => {
+  const handleOpenDetails = async (tx) => {
     setSelectedTx(tx);
+    setSettlementSummary(null);
+    setLoadingSummary(true);
+
+    const resolvedSellerId = (resolveSellerId() || "").trim();
+    const resolvedPin = sellerService.getCachedSellerPinCode() || "";
+
+    const orderAmount = tx.amount || tx.orderAmount || 0;
+    const categoryId = tx.categoryId || tx.category_id || tx.category || "";
+    const deliveryCharges = tx.deliveryCharges ?? tx.delivery_charges ?? true;
+    const shippingWeight = tx.shippingWeight ?? tx.shipping_weight ?? "";
+
+    // Validate parameters (Task 5)
+    if (!resolvedSellerId) {
+      setError("Seller session not found. Please login again.");
+      setLoadingSummary(false);
+      return;
+    }
+    if (!resolvedPin || resolvedPin === "000000") {
+      setError("sellerPinCode is required for settlement summary.");
+      setLoadingSummary(false);
+      return;
+    }
+    if (orderAmount === undefined || orderAmount === null || orderAmount === "" || Number(orderAmount) === 0) {
+      setError("orderAmount is required for settlement summary.");
+      setLoadingSummary(false);
+      return;
+    }
+    if (!categoryId || categoryId === "CATEGORY_ID") {
+      setError("categoryId is required for settlement summary.");
+      setLoadingSummary(false);
+      return;
+    }
+    if (shippingWeight === undefined || shippingWeight === null || shippingWeight === "") {
+      setError("shippingWeight is required for settlement summary.");
+      setLoadingSummary(false);
+      return;
+    }
+
+    const params = {
+      orderAmount,
+      categoryId,
+      deliveryCharges,
+      shippingWeight,
+      sellerPinCode: resolvedPin,
+      sellerId: resolvedSellerId,
+    };
+
+    // Debug logging (Task 6)
+    if (process.env.NODE_ENV === "development" || window.location.hostname === "localhost") {
+      console.log("[SettlementsPage] settlement request params", params);
+    }
+
+    try {
+      const normalizedData = await sellerService.fetchSettlementSummary(params);
+      const response = normalizedData.raw;
+
+      if (process.env.NODE_ENV === "development" || window.location.hostname === "localhost") {
+        console.log("[SettlementsPage] settlement response", response);
+        console.log("[SettlementsPage] normalized settlement", normalizedData);
+      }
+
+      setSettlementSummary(normalizedData);
+    } catch (err) {
+      console.error("[SettlementsPage] fetchSettlementSummary failed:", err);
+      setError(err.message || "Failed to load settlement details.");
+    } finally {
+      setLoadingSummary(false);
+    }
   };
 
   const handleCloseDetails = () => {
     setSelectedTx(null);
+    setSettlementSummary(null);
   };
 
   // Date picker navigation helpers
@@ -338,47 +406,95 @@ const SettlementsPage = () => {
                 <X size={20} />
               </button>
             </div>
-            
-            <div className="modal-body">
+                        <div className="modal-body">
               <div className="modal-info-row">
                 <span className="info-label font-bold">Order ID:</span>
-                <span className="info-value font-bold text-gray-800">{selectedTx.orderId}</span>
+                <span className="info-value font-bold text-gray-800">#{selectedTx.orderId}</span>
               </div>
               
               <div className="modal-divider" />
-              
-              <div className="modal-info-row">
-                <span className="info-label">Order Amount</span>
-                <span className="info-value">₹{selectedTx.orderAmount.toFixed(2)}</span>
-              </div>
-              <div className="modal-info-row">
-                <span className="info-label">Product GST</span>
-                <span className="info-value">₹{selectedTx.productGst.toFixed(2)}</span>
-              </div>
-              <div className="modal-info-row">
-                <span className="info-label">Shipping Fee</span>
-                <span className="info-value">₹{selectedTx.shippingFee.toFixed(2)}</span>
-              </div>
-              <div className="modal-info-row">
-                <span className="info-label">Shipping GST</span>
-                <span className="info-value">₹{selectedTx.shippingGst.toFixed(2)}</span>
-              </div>
-              <div className="modal-info-row">
-                <span className="info-label">RTO Penalty</span>
-                <span className="info-value">{selectedTx.rtoPenalty === null ? "—" : `₹${selectedTx.rtoPenalty.toFixed(2)}`}</span>
-              </div>
-              
-              <div className="modal-divider" />
-              
-              <div className="modal-info-row debit-row">
-                <span className="info-label font-bold">Total Debit</span>
-                <span className="info-value font-bold">₹{selectedTx.totalDebit.toFixed(2)}</span>
-              </div>
-              
-              <div className="modal-info-row settlement-row">
-                <span className="info-label font-bold text-emerald-600">Settlement Amount</span>
-                <span className="info-value font-bold text-emerald-600">₹{selectedTx.settlementAmount.toFixed(2)}</span>
-              </div>
+
+              {loadingSummary ? (
+                <div className="settlements-loading" style={{ minHeight: "150px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div className="settlements-spinner" />
+                  <p style={{ marginTop: "12px", fontSize: "14px", color: "#6b7280" }}>Calculating settlement summary...</p>
+                </div>
+              ) : settlementSummary ? (
+                <>
+                  <div className="modal-info-row">
+                    <span className="info-label">Selling Price</span>
+                    <span className="info-value">₹{settlementSummary.sellingPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">Product GST</span>
+                    <span className="info-value">₹{settlementSummary.productGST.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">TCS</span>
+                    <span className="info-value">₹{settlementSummary.tcs.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">TDS</span>
+                    <span className="info-value">₹{settlementSummary.tds.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">Haatza Commission</span>
+                    <span className="info-value">₹{settlementSummary.commission.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">GST on Commission</span>
+                    <span className="info-value">₹{settlementSummary.gstOnCommission.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">Payment Gateway Charges</span>
+                    <span className="info-value">₹{settlementSummary.pgCharges.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">GST on PG Charges</span>
+                    <span className="info-value">₹{settlementSummary.gstOnPgCharges.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">Shipping Fee</span>
+                    <span className="info-value">₹{settlementSummary.shippingFee.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">GST on Shipping</span>
+                    <span className="info-value">₹{settlementSummary.gstOnShippingFee.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">Fixed Fee</span>
+                    <span className="info-value">₹{settlementSummary.fixedFee.toFixed(2)}</span>
+                  </div>
+                  <div className="modal-info-row">
+                    <span className="info-label">Handling Fee</span>
+                    <span className="info-value">₹{settlementSummary.handlingFee.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="modal-divider" />
+                  
+                  <div className="modal-info-row debit-row">
+                    <span className="info-label font-bold">Total Debit</span>
+                    <span className="info-value font-bold">₹{settlementSummary.totalDebit.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="modal-info-row settlement-row">
+                    <span className="info-label font-bold text-emerald-600">Settlement Amount</span>
+                    <span className="info-value font-bold text-emerald-600">₹{settlementSummary.settlementAmount.toFixed(2)}</span>
+                  </div>
+
+                  {settlementSummary.note && (
+                    <div style={{ marginTop: "12px", padding: "10px", background: "#f9fafb", borderRadius: "8px", border: "1px solid #f1f3f6" }}>
+                      <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", fontStyle: "italic" }}>
+                        <strong>Note:</strong> {settlementSummary.note}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ padding: "20px", textAlign: "center", color: "#ef4444" }}>
+                  Failed to load settlement details.
+                </div>
+              )}
             </div>
           </div>
         </div>

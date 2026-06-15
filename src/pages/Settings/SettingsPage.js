@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { User, Building, Landmark, AlertCircle, RefreshCw } from "lucide-react";
-import { resolveSellerEmailForApi } from "../../api/listingApi";
-import { fetchSellerDetails } from "../../services/sellerApi";
+import { resolveSellerEmailForApi, fetchSellerDetails } from "../../services/sellerService";
 import "./SettingsPage.css";
 
 const SettingsPage = () => {

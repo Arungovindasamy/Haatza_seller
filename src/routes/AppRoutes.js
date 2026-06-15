@@ -11,11 +11,17 @@ const OnboardingPage = lazy(() => import("../pages/Onboarding/Onboarding"));
 const DashboardLayout = lazy(() => import("../components/Layout/DashboardLayout/DashboardLayout"));
 
 // Dashboard pages
+const DashboardPage = lazy(() => import("../pages/Dashboard/DashboardPage"));
 const InventoryPage = lazy(() => import("../pages/Inventory/InventoryPage"));
 const WalletPage = lazy(() => import("../pages/Wallet/WalletPage"));
 const NotificationsPage = lazy(() => import("../pages/Notifications/NotificationsPage"));
 const SettingsPage = lazy(() => import("../pages/Settings/SettingsPage"));
 const SettlementsPage = lazy(() => import("../pages/Settlements/SettlementsPage"));
+const HelpPage = lazy(() => import("../pages/Help/HelpPage"));
+const AdvertisementPage = lazy(() => import("../pages/Advertisement/AdvertisementPage"));
+const CreateCampaignPage = lazy(() => import("../pages/Advertisement/CreateCampaignPage"));
+const HaatzUpPage = lazy(() => import("../pages/HaatzUp/HaatzUpPage"));
+const UploadReelPage = lazy(() => import("../pages/HaatzUp/UploadReelPage"));
 
 // Listings page flow
 const AddListing = lazy(() => import("../pages/AddProduct/AddListing/AddListing"));
@@ -64,38 +70,6 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
-const DashboardIndex = () => (
-  <div className="dashboard-index-container" style={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "65vh",
-    width: "100%",
-    background: "radial-gradient(circle, rgba(41, 98, 255, 0.25) 0%, rgba(245, 247, 255, 0) 70%)"
-  }}>
-    <div style={{ textAlign: "center" }}>
-      <h1 style={{
-        fontSize: "36px",
-        fontWeight: "700",
-        color: "#ffffff",
-        marginBottom: "12px",
-        textShadow: "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 30px rgba(41, 98, 255, 0.4)"
-      }}>
-        Welcome back, Teezaa! ✨
-      </h1>
-      <p style={{
-        color: "rgba(255, 255, 255, 0.8)",
-        fontSize: "18px",
-        fontWeight: "500",
-        margin: 0,
-        textShadow: "0 2px 10px rgba(0, 0, 0, 0.08)"
-      }}>
-        This page is coming soon.
-      </p>
-    </div>
-  </div>
-);
-
 function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -109,7 +83,7 @@ function AppRoutes() {
 
         {/* Dashboard Shell Parent Route */}
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<DashboardIndex />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/settlements" element={<SettlementsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
@@ -119,9 +93,11 @@ function AppRoutes() {
           {/* Fallback mock placeholder pages */}
           <Route path="/orders" element={<PlaceholderPage title="Orders" />} />
           <Route path="/return-exchange" element={<PlaceholderPage title="Return / Exchange" />} />
-          <Route path="/help" element={<PlaceholderPage title="Help" />} />
-          <Route path="/advertisement" element={<PlaceholderPage title="Advertisement" />} />
-          <Route path="/haatzup" element={<PlaceholderPage title="HaatzUp" />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/advertisement" element={<AdvertisementPage />} />
+          <Route path="/advertisement/create-campaign" element={<CreateCampaignPage />} />
+          <Route path="/haatzup" element={<HaatzUpPage />} />
+          <Route path="/haatzup/upload-reel" element={<UploadReelPage />} />
           <Route path="/growplan" element={<PlaceholderPage title="Grow Plan" />} />
           <Route path="/productinsight" element={<PlaceholderPage title="Product Insight" />} />
           <Route path="/warehouse" element={<PlaceholderPage title="Warehouse" />} />

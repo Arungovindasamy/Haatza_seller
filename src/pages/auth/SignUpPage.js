@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";import { useNavigate } from "react-router-dom";
 import SignUpForm from "../../components/auth/SignUpForm/SignUpForm";
-import { registerUser } from "../../api/RegisterApi";
-import { saveUser } from '../../utils/userStore';
+import { registerUser } from "../../services/sellerService";
+
 export let registeredEmail = '';
 /**
  * SignUpPage — route-level container for the sign-up / registration flow

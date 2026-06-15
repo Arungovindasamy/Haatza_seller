@@ -3,12 +3,11 @@ import InventoryStats from "./components/InventoryStats";
 import InventoryFilters from "./components/InventoryFilters";
 import InventoryTable from "./components/InventoryTable";
 import { getSellerId } from "../../utils/sellerSession";
-import { sellerService } from "../../services/sellerService";
-import { resolveWixImage } from "../../api/listingApi";
+import { sellerService, resolveWixImage } from "../../services/sellerService";
 import "./InventoryPage.css";
 
 const InventoryPage = () => {
-  const sellerId = useMemo(() => getSellerId(), []);
+  const sellerId = getSellerId();
   
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./SpecificationPage.css";
-import { fetchCategoryFields } from "../../../api/specificationApi";
+import { fetchCategoryFields } from "../../../services/sellerService";
 import LivePreview from "../../../components/LivePreview/LivePreview";
 
 const resolveWixImage = (img) => {

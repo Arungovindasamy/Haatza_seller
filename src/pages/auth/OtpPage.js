@@ -2,8 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import OtpScreen from "../../components/auth/OtpScreen/OtpScreen";
-import { generateOtp, verifyOtp, resendOtp } from "../../api/OtpApi";
-import { checkOnboardStatus } from "../../api/OnboardStatusApi";
+import { generateOtp, verifyOtp, resendOtp, checkOnboardStatus } from "../../services/sellerService";
 const OTP_LENGTH    = 6;
 const TIMER_SECONDS = 60;
 

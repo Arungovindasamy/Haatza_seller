@@ -8,7 +8,7 @@ import {
   AlertTriangle, Plus, ChevronLeft, ChevronRight, MoreVertical, ArrowLeft,
   ChevronDown, ChevronUp,
 } from "lucide-react";
-import { fetchSellerListings, fetchProductDetails } from "../../../api/MyListingsApi";
+import { fetchSellerListings, fetchProductDetails } from "../../../services/sellerService";
 import "./MyListings.css";
 
 // ─── Wix Image Utilities ──────────────────────────────────────────────────────

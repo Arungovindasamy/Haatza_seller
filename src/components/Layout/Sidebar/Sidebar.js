@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactDOM from "react-dom";
+import { sellerService } from "../../../services/sellerService";
+import { getSellerId } from "../../../utils/sellerSession";
 import "./Sidebar.css";
 
 const KEY_TO_ROUTE = {
@@ -28,10 +30,17 @@ const ROUTE_TO_KEY = Object.fromEntries(
   Object.entries(KEY_TO_ROUTE).map(([k, v]) => [v, k])
 );
 
-/* ─────────────────────────────────────────────────────────────
-   NAV DATA
-   ───────────────────────────────────────────────────────────── */
-const NAV_SECTIONS = [
+// Menu icons helpers
+const createIcon = (d, viewBox = "0 0 24 24", extra = null) => {
+  return React.createElement(
+    "svg",
+    { width: "20", height: "20", viewBox, fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
+    React.createElement("path", { d }),
+    extra
+  );
+};
+
+const NAV_SECTIONS_FALLBACK = [
   {
     heading: "MANAGE BUSINESS",
     items: [
@@ -86,6 +95,47 @@ const NAV_SECTIONS = [
       },
     ],
   },
+  {
+    heading: "Boost Sales",
+    items: [
+      {
+        key: "advertisement", label: "Advertisement",
+        icon: createIcon("M23 7H1v10h22V7z", "0 0 24 24", React.createElement("path", { d: "M16 21V3a2 2 0 00-2-2h-4a2 2 0 00-2 2v18" })),
+      },
+      {
+        key: "haatzup", label: "HaatzUp",
+        icon: createIcon("M23 7l-7 5 7 5V7z", "0 0 24 24", React.createElement("rect", { x: "1", y: "5", width: "15", height: "14", rx: "2", ry: "2" })),
+      },
+      {
+        key: "growplan", label: "Grow Plan",
+        icon: createIcon("M18 20V10M12 20V4M6 20v-6"),
+      },
+      {
+        key: "productinsight", label: "Product Insight",
+        icon: createIcon("M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", "0 0 24 24", React.createElement("circle", { cx: "12", cy: "12", r: "3" })),
+      },
+      {
+        key: "warehouse", label: "Warehouse",
+        icon: createIcon("M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"),
+      },
+      {
+        key: "influencer", label: "Influencer Branding",
+        icon: createIcon("M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "0 0 24 24", React.createElement("circle", { cx: "9", cy: "7", r: "4" })),
+      },
+      {
+        key: "growthcentral", label: "Growth Central",
+        icon: createIcon("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "0 0 24 24", React.createElement("path", { d: "M16.2 7.8l-2.2 6.4-6.4 2.2 2.2-6.4 6.4-2.2z" })),
+      },
+      {
+        key: "qualityinsights", label: "Quality Insights",
+        icon: createIcon("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "0 0 24 24", React.createElement("path", { d: "M12 8v4M12 16h.01" })),
+      },
+      {
+        key: "referandearn", label: "Refer & Earn",
+        icon: createIcon("M22 7H2v14h20V7z", "0 0 24 24", React.createElement("path", { d: "M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16" })),
+      }
+    ],
+  }
 ];
 
 const DASHBOARD_ITEM = {
@@ -117,9 +167,6 @@ const BOTTOM_ITEMS = [
   },
 ];
 
-/* ─────────────────────────────────────────────────────────────
-   ICONS
-   ───────────────────────────────────────────────────────────── */
 const ChevronLeftIcon = () =>
   React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
     React.createElement("polyline", { points: "15 18 9 12 15 6" })
@@ -130,14 +177,6 @@ const ChevronRightIcon = () =>
     React.createElement("polyline", { points: "9 18 15 12 9 6" })
   );
 
-/* ─────────────────────────────────────────────────────────────
-   SIDEBAR TOOLTIP
-   ─────────────────────────────────────────────────────────────
-   Rendered into document.body via a React portal.
-   Position is set from anchorRect (getBoundingClientRect of the
-   hovered nav button), so it tracks perfectly during scroll —
-   no CSS ::after hack, no stale coordinate issues.
-   ───────────────────────────────────────────────────────────── */
 function SidebarTooltip({ label, anchorRect, visible }) {
   const tooltipRef = useRef(null);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
@@ -146,21 +185,16 @@ function SidebarTooltip({ label, anchorRect, visible }) {
   useEffect(() => {
     if (!anchorRect) { setReady(false); return; }
 
-    // Tooltip gap from sidebar right edge → tooltip left edge
     const GAP = 14;
-    // Estimated height before first render; actual height used after mount
     const estimatedH = tooltipRef.current ? tooltipRef.current.offsetHeight : 36;
-
     const rawTop = anchorRect.top + anchorRect.height / 2 - estimatedH / 2;
     const rawLeft = anchorRect.right + GAP;
-
-    // Clamp vertically inside the viewport
     const maxTop = window.innerHeight - estimatedH - 8;
+
     setCoords({ top: Math.max(8, Math.min(rawTop, maxTop)), left: rawLeft });
     setReady(true);
   }, [anchorRect]);
 
-  // Nothing to show — keep it completely out of the paint tree
   if (!label) return null;
 
   return ReactDOM.createPortal(
@@ -172,7 +206,6 @@ function SidebarTooltip({ label, anchorRect, visible }) {
         style: { top: coords.top, left: coords.left },
         "aria-hidden": "true",
       },
-      /* Left-pointing caret */
       React.createElement("span", { className: "sidebar-tooltip__caret", "aria-hidden": "true" }),
       label
     ),
@@ -180,14 +213,10 @@ function SidebarTooltip({ label, anchorRect, visible }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   NAV ITEM
-   ───────────────────────────────────────────────────────────── */
 function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipHide, tooltipActiveKey }) {
   const btnRef = useRef(null);
   const isTouchDevice = useRef(false);
 
-  // Detect touch device
   useEffect(() => {
     isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }, []);
@@ -202,10 +231,9 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
     if (onTooltipHide) onTooltipHide();
   }, [onTooltipHide]);
 
-  // Touch handlers for mobile/tablet - persistent tooltip
   const handleTouchStart = useCallback((e) => {
     if (!isCollapsed || !onTooltipShow || !isTouchDevice.current) return;
-    e.preventDefault(); // Prevent scroll interference
+    e.preventDefault();
 
     const rect = btnRef.current?.getBoundingClientRect();
     if (rect) {
@@ -214,10 +242,9 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
   }, [isCollapsed, onTooltipShow, item.label, item.key, isTouchDevice]);
 
   const handleTouchEnd = useCallback((e) => {
-    // Only handle click navigation, tooltip stays persistent
     setTimeout(() => {
       if (onClick) onClick(item.key);
-    }, 50); // Small delay for smooth UX
+    }, 50);
   }, [onClick, item.key]);
 
   return React.createElement(
@@ -250,13 +277,13 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SELLER PROFILE
-   ───────────────────────────────────────────────────────────── */
 function SellerProfile({ sellerName = "", sellerEmail = "", onProfileClick, isCollapsed }) {
-  const initials = sellerName
+  const displayCompany = sellerName || "Seller";
+  const displayEmail = sellerEmail || "";
+
+  const initials = displayCompany
     .split(" ")
-    .map(n => n[0])
+    .map((n) => n ? n[0] : "")
     .join("")
     .toUpperCase()
     .slice(0, 2) || "??";
@@ -268,35 +295,26 @@ function SellerProfile({ sellerName = "", sellerEmail = "", onProfileClick, isCo
         "sidebar__profile",
         isCollapsed ? "sidebar__profile--mini" : "",
       ].filter(Boolean).join(" "),
-      title: isCollapsed ? sellerName : undefined,
+      onClick: onProfileClick,
+      title: isCollapsed ? displayCompany : undefined,
+      style: { cursor: "pointer" }
     },
     React.createElement("div", { className: "profile__avatar" },
       React.createElement("span", { className: "profile__avatar-initials" }, initials)
     ),
     !isCollapsed && React.createElement(
       "div", { className: "profile__info" },
-      React.createElement("p", { className: "profile__name" }, sellerName || "Loading..."),
-      React.createElement("div", { className: "profile__email-container" },
-        React.createElement("p", { className: "profile__email" }, sellerEmail || "seller@haatza.com"),
-        React.createElement("button", {
-          className: "profile__action-btn",
-          title: "View Store Profile",
-          onClick: onProfileClick,
-        },
-          React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
-            React.createElement("path", { d: "M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" }),
-            React.createElement("polyline", { points: "15 3 21 3 21 9" }),
-            React.createElement("line", { x1: "10", y1: "14", x2: "21", y2: "3" })
-          )
-        )
+      React.createElement("p", { className: "profile__name" }, displayCompany),
+      React.createElement("p", { className: "profile__email" }, displayEmail)
+    ),
+    !isCollapsed && React.createElement("div", { className: "profile__arrow" },
+      React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
+        React.createElement("polyline", { points: "9 18 15 12 9 6" })
       )
     )
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SIDEBAR
-   ───────────────────────────────────────────────────────────── */
 function Sidebar({
   sellerName = "",
   sellerEmail = "",
@@ -308,6 +326,95 @@ function Sidebar({
   const [isCollapsed, setIsCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768
   );
+
+  const [menuSections, setMenuSections] = useState(NAV_SECTIONS_FALLBACK);
+
+  const sellerId = getSellerId();
+
+  useEffect(() => {
+    if (!sellerId) return;
+
+    const fetchCounts = async () => {
+      try {
+        const [ordersRes, ticketsRes, notifRes, walletRes, campaignRes] = await Promise.allSettled([
+          sellerService.getSellerNewOrders(sellerId),
+          sellerService.getTickets(sellerId),
+          sellerService.getNotifications(sellerId),
+          sellerService.checkWalletBalance(sellerId),
+          sellerService.getAdvertisementSummary(sellerId)
+        ]);
+
+        let ordersCount = 0;
+        if (ordersRes.status === "fulfilled") {
+          const rawOrders = ordersRes.value?.data || ordersRes.value?.message || [];
+          ordersCount = Array.isArray(rawOrders)
+            ? rawOrders.filter(o => o.status === "new" || o.status === "pending").length
+            : (ordersRes.value?.count || 0);
+        }
+
+        let ticketsCount = 0;
+        if (ticketsRes.status === "fulfilled") {
+          const rawTickets = ticketsRes.value?.message?.data || ticketsRes.value?.data || ticketsRes.value?.tickets || [];
+          ticketsCount = Array.isArray(rawTickets)
+            ? rawTickets.filter(t => t.status !== "Closed" && t.status !== "Resolved").length
+            : 0;
+        }
+
+        let unreadNotifCount = 0;
+        if (notifRes.status === "fulfilled") {
+          const rawNotifs = notifRes.value?.message?.data || notifRes.value?.data || [];
+          unreadNotifCount = Array.isArray(rawNotifs)
+            ? rawNotifs.filter(n => !n.read && n.status !== "read").length
+            : 0;
+        }
+
+        let walletLabel = "";
+        if (walletRes.status === "fulfilled") {
+          const bal = Number(walletRes.value?.message?.RemainingBalance || walletRes.value?.RemainingBalance || 0);
+          walletLabel = `₹${bal.toFixed(2)}`;
+        }
+
+        let activeCampaigns = 0;
+        if (campaignRes.status === "fulfilled") {
+          const summary = campaignRes.value?.data || campaignRes.value?.message || {};
+          activeCampaigns = summary.activeCampaigns || summary.ActiveCampaignsCount || 0;
+        }
+
+        setMenuSections(prevSections => {
+          return prevSections.map(section => {
+            return {
+              ...section,
+              items: section.items.map(item => {
+                if (item.key === "orders") {
+                  return { ...item, badge: ordersCount > 0 ? String(ordersCount) : undefined };
+                }
+                if (item.key === "help") {
+                  return { ...item, badge: ticketsCount > 0 ? String(ticketsCount) : undefined };
+                }
+                if (item.key === "notifications") {
+                  return { ...item, badge: unreadNotifCount > 0 ? String(unreadNotifCount) : undefined };
+                }
+                if (item.key === "wallet") {
+                  return { ...item, badge: walletLabel || undefined };
+                }
+                if (item.key === "advertisement") {
+                  return { ...item, badge: activeCampaigns > 0 ? `${activeCampaigns} Active` : undefined };
+                }
+                return item;
+              })
+            };
+          });
+        });
+
+      } catch (err) {
+        console.warn("[Sidebar] Error updating dynamic counts:", err);
+      }
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, [sellerId]);
 
   const activeKey = (() => {
     const path = location.pathname;
@@ -323,7 +430,6 @@ function Sidebar({
     return ROUTE_TO_KEY[path] ?? "dashboard";
   })();
 
-  /* ── Tooltip state ────────────────────────────────────────── */
   const [tooltip, setTooltip] = useState({
     label: "",
     anchorRect: null,
@@ -333,7 +439,6 @@ function Sidebar({
   const hideTimer = useRef(null);
   const isTouchDevice = useRef(false);
 
-  // Detect touch device
   useEffect(() => {
     isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }, []);
@@ -344,18 +449,15 @@ function Sidebar({
   }, []);
 
   const handleTooltipHide = useCallback(() => {
-    // For desktop: hide immediately
     if (!isTouchDevice.current) {
       clearTimeout(hideTimer.current);
       setTooltip({ label: "", anchorRect: null, visible: false, activeKey: null });
     }
   }, [isTouchDevice]);
 
-  // Hide tooltip on outside clicks (mobile)
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (isCollapsed && tooltip.visible && isTouchDevice.current) {
-        // Check if click is outside sidebar and tooltip
         if (!e.target.closest('.sidebar') && !e.target.closest('.sidebar-tooltip')) {
           setTooltip({ label: "", anchorRect: null, visible: false, activeKey: null });
         }
@@ -373,12 +475,10 @@ function Sidebar({
     };
   }, [isCollapsed, tooltip.visible, isTouchDevice]);
 
-  // Update tooltip position when scrolling (for active tooltip)
   useEffect(() => {
     let rafId;
     const updateTooltipPosition = () => {
       if (tooltip.visible && tooltip.anchorRect && isCollapsed && isTouchDevice.current) {
-        // Find the current nav item by key or position
         const navItems = document.querySelectorAll('.nav-item');
         for (let item of navItems) {
           if (item.classList.contains(`nav-item--tooltip-active`)) {
@@ -400,7 +500,6 @@ function Sidebar({
     };
   }, [tooltip.visible, tooltip.activeKey, isCollapsed, isTouchDevice]);
 
-  // Kill tooltip instantly on sidebar expand
   useEffect(() => {
     if (!isCollapsed) {
       clearTimeout(hideTimer.current);
@@ -408,13 +507,11 @@ function Sidebar({
     }
   }, [isCollapsed]);
 
-  /* ── Breakpoint listener ──────────────────────────────────── */
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
     const onBreakpoint = (e) => {
       setIsCollapsed(e.matches);
       if (e.matches) {
-        // Hide tooltip on mobile collapse
         setTooltip({ label: "", anchorRect: null, visible: false, activeKey: null });
       }
     };
@@ -431,6 +528,7 @@ function Sidebar({
     const route = KEY_TO_ROUTE[key];
     if (route) navigate(route);
   }, [navigate]);
+
   const handleProfileClick = useCallback((e) => {
     e.stopPropagation();
     onProfileClick();
@@ -442,7 +540,6 @@ function Sidebar({
     return w || "380px";
   }, [isCollapsed]);
 
-  /* Tooltip callbacks — only wired when sidebar is actually collapsed */
   const tooltipCallbacks = isCollapsed
     ? {
       onTooltipShow: handleTooltipShow,
@@ -451,7 +548,6 @@ function Sidebar({
     }
     : {};
 
-  /* ── Sidebar content ──────────────────────────────────────── */
   const content = React.createElement(
     React.Fragment, null,
 
@@ -466,7 +562,7 @@ function Sidebar({
     React.createElement("div", { className: "sidebar__divider" }),
 
     React.createElement("nav", { className: "sidebar__nav" },
-      NAV_SECTIONS.map((section) =>
+      menuSections.map((section) =>
         React.createElement("div", { key: section.heading, className: "nav-section" },
           !isCollapsed && React.createElement("p", { className: "nav-section__heading" }, section.heading),
           section.items.map((item) =>
@@ -487,10 +583,8 @@ function Sidebar({
   return React.createElement(
     React.Fragment, null,
 
-    /* ── Floating tooltip portal ──────────────────────────── */
     React.createElement(SidebarTooltip, tooltip),
 
-    /* ── Toggle button ────────────────────────────────────── */
     React.createElement(
       "button",
       {
@@ -503,7 +597,6 @@ function Sidebar({
       isCollapsed ? React.createElement(ChevronRightIcon) : React.createElement(ChevronLeftIcon)
     ),
 
-    /* ── Sidebar shell ────────────────────────────────────── */
     React.createElement(
       "aside",
       { className: ["sidebar", isCollapsed ? "sidebar--mini" : ""].filter(Boolean).join(" ") },

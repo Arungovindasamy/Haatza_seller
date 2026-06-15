@@ -11,7 +11,7 @@ import {
 import {
   fetchInProgressListings,
   fetchInProgressProductDetails,
-} from "../../../api/InProgressListingsApi";
+} from "../../../services/sellerService";
 import "./InProgressListings.css";
 
 // ─── Wix Image Utilities ──────────────────────────────────────────────────────

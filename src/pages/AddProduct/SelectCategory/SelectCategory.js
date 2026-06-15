@@ -9,7 +9,7 @@ import {
   searchCategories,
   searchSubcategories,
   normalizeSearchText,
-} from "../../../api/categoryApi";
+} from "../../../services/sellerService";
 
 /* ─────────────────────────────────────────
    CONSTANTS

@@ -8,11 +8,9 @@ import {
   buildCreatePayload,
   buildUpdatePayload,
   resolveWixImage,
-} from "../../../api/listingApi";
-import {
   getCachedSellerId,
   getCachedSellerPinCode,
-} from "../../../api/sellerProfileApi";
+} from "../../../services/sellerService";
 
 /* ── SVG ICONS ── */
 const ArrowLeftIcon = ({ size = 16 }) => (
@@ -363,6 +361,7 @@ const isUpdate = !!(isEditMode && !isDuplicateMode && tableId && !isViewMode);
       deliveryCharges: formData.deliveryCharge === "yes",
       shippingWeight:  Math.min(parseFloat(formData.shippingWeight) || 0, 5000),
       sellerPinCode:   resolveSellerPinCode(),
+      sellerId:        getCachedSellerId(),
     };
 
     fetchSettlementSummary(settlementParams)

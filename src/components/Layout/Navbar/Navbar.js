@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 import haatzaSellerLogo from "../../../assets/Images/haatzaSellerlogo.png";
 import {
@@ -7,7 +7,6 @@ import {
   Wallet,
   MessageSquare,
   Search,
-  ChevronDown,
   User,
   Settings,
   HelpCircle,
@@ -15,8 +14,7 @@ import {
   X,
 } from "lucide-react";
 
-import { sellerService } from "../../../services/sellerService";
-import { getSellerId } from "../../../utils/sellerSession";
+
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -27,6 +25,7 @@ const getGreeting = () => {
 
 const HaatzaNavbar = ({ seller = {} }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileIconsOpen, setMobileIconsOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -37,184 +36,14 @@ const HaatzaNavbar = ({ seller = {} }) => {
   const dropdownRef = useRef(null);
   const mobileIconRef = useRef(null);
 
-  const sellerId = getSellerId() || "HS1380";
 
   // Dropdown states
-  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
-  const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const [remindersDropdownOpen, setRemindersDropdownOpen] = useState(false);
-
-  // Notifications API states
-  const [notifications, setNotifications] = useState([]);
-  const [notifLoading, setNotifLoading] = useState(false);
-  const [notifError, setNotifError] = useState(null);
-
-  // Wallet API states
-  const [walletBalance, setWalletBalance] = useState(null);
-  const [walletTransactions, setWalletTransactions] = useState([]);
-  const [walletLoading, setWalletLoading] = useState(false);
-  const [walletError, setWalletError] = useState(null);
-
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    setNotifLoading(true);
-    setNotifError(null);
-    try {
-      const response = await sellerService.getNotifications(sellerId);
-      const rawNotif = response?.message?.data || response?.data || [];
-      setNotifications(rawNotif);
-    } catch (err) {
-      console.error("[Navbar] Fetch notifications failed:", err);
-      setNotifError("Failed to load notifications.");
-    } finally {
-      setNotifLoading(false);
-    }
-  };
-
-  // Mark notification as read
-  const handleMarkRead = async (e, id) => {
-    e.stopPropagation();
-    try {
-      await sellerService.updateNotificationStatus(sellerId, id, "read");
-      setNotifications(prev => prev.map(n => n._id === id || n.id === id ? { ...n, read: true, status: "read" } : n));
-    } catch (err) {
-      console.error("[Navbar] Update notification failed:", err);
-    }
-  };
-
-  // Fetch wallet info
-  const fetchWalletInfo = async () => {
-    setWalletLoading(true);
-    setWalletError(null);
-    try {
-      const [balanceRes, transactionsRes] = await Promise.all([
-        sellerService.checkWalletBalance(sellerId),
-        sellerService.getTransactionHistory(sellerId),
-      ]);
-      const fetchedBalance = Number(balanceRes?.message?.RemainingBalance || 0);
-      const rawTx = transactionsRes?.message?.transactions || [];
-      setWalletBalance(fetchedBalance);
-      setWalletTransactions(rawTx.slice(0, 5)); // show top 5 recent
-    } catch (err) {
-      console.error("[Navbar] Fetch wallet info failed:", err);
-      setWalletError("Failed to load wallet data.");
-    } finally {
-      setWalletLoading(false);
-    }
-  };
-
-  const toggleNotifDropdown = () => {
-    const nextState = !notifDropdownOpen;
-    setNotifDropdownOpen(nextState);
-    setWalletDropdownOpen(false);
-    setRemindersDropdownOpen(false);
-    setDropdownOpen(false);
-    if (nextState) {
-      fetchNotifications();
-    }
-  };
-
-  const toggleWalletDropdown = () => {
-    const nextState = !walletDropdownOpen;
-    setWalletDropdownOpen(nextState);
-    setNotifDropdownOpen(false);
-    setRemindersDropdownOpen(false);
-    setDropdownOpen(false);
-    if (nextState) {
-      fetchWalletInfo();
-    }
-  };
 
   const toggleRemindersDropdown = () => {
     const nextState = !remindersDropdownOpen;
     setRemindersDropdownOpen(nextState);
-    setNotifDropdownOpen(false);
-    setWalletDropdownOpen(false);
     setDropdownOpen(false);
-  };
-
-  const NotifDropdownMenu = () => {
-    return React.createElement(
-      "div", { className: "navbar-dropdown-panel notif-dropdown" },
-      React.createElement("div", { className: "dropdown-panel-header" },
-        React.createElement("h3", null, "Notifications"),
-        React.createElement("button", { 
-          className: "btn-mark-all-read", 
-          onClick: async (e) => {
-            e.stopPropagation();
-            try {
-              await Promise.all(notifications.filter(n => !n.read && !n.status === "read").map(n => sellerService.updateNotificationStatus(sellerId, n._id || n.id, "read")));
-              setNotifications(prev => prev.map(n => ({ ...n, read: true, status: "read" })));
-            } catch (err) {
-              console.error(err);
-            }
-          }
-        }, "Mark all read")
-      ),
-      React.createElement("div", { className: "dropdown-panel-body" },
-        notifLoading
-          ? React.createElement("div", { className: "panel-loading" }, "Loading...")
-          : notifError
-            ? React.createElement("div", { className: "panel-error" }, notifError)
-            : notifications.length === 0
-              ? React.createElement("div", { className: "panel-empty" }, "No notifications available.")
-              : React.createElement("ul", { className: "panel-list" },
-                  notifications.map((n, idx) => {
-                    const isRead = n.read || n.status === "read";
-                    return React.createElement("li", { 
-                      key: n._id || n.id || idx, 
-                      className: `panel-list-item ${isRead ? "read" : "unread"}` 
-                    },
-                      React.createElement("div", { className: "item-content" },
-                        React.createElement("p", { className: "item-title" }, n.title || "Notification"),
-                        React.createElement("p", { className: "item-message" }, n.message || n.body || "")
-                      ),
-                      !isRead && React.createElement("button", { 
-                        className: "btn-item-read",
-                        onClick: (e) => handleMarkRead(e, n._id || n.id)
-                      }, "✓")
-                    );
-                  })
-                )
-      )
-    );
-  };
-
-  const WalletDropdownMenu = () => {
-    return React.createElement(
-      "div", { className: "navbar-dropdown-panel wallet-dropdown" },
-      React.createElement("div", { className: "dropdown-panel-header" },
-        React.createElement("h3", null, "Wallet Balance"),
-        React.createElement("span", { className: "wallet-balance-amount" }, 
-          walletBalance !== null ? `₹${walletBalance.toFixed(2)}` : "..."
-        )
-      ),
-      React.createElement("div", { className: "dropdown-panel-body" },
-        walletLoading
-          ? React.createElement("div", { className: "panel-loading" }, "Loading...")
-          : walletError
-            ? React.createElement("div", { className: "panel-error" }, walletError)
-            : walletTransactions.length === 0
-              ? React.createElement("div", { className: "panel-empty" }, "No transactions found.")
-              : React.createElement("ul", { className: "panel-list" },
-                  walletTransactions.map((tx, idx) => {
-                    const isCredit = String(tx.type || "").toLowerCase().includes("credit") || String(tx.type || "").toLowerCase().includes("deposit");
-                    return React.createElement("li", { 
-                      key: tx._id || tx.id || idx, 
-                      className: "panel-list-item tx-item" 
-                    },
-                      React.createElement("div", { className: "item-content" },
-                        React.createElement("p", { className: "item-title" }, tx.type || "Transaction"),
-                        React.createElement("p", { className: "item-date" }, tx.createdDate ? new Date(tx.createdDate).toLocaleDateString() : "")
-                      ),
-                      React.createElement("span", { className: `tx-amount ${isCredit ? "credit" : "debit"}` }, 
-                        `${isCredit ? "+" : "-"}₹${Number(tx.amount || 0).toFixed(2)}`
-                      )
-                    );
-                  })
-                )
-      )
-    );
   };
 
   const RemindersDropdownMenu = () => {
@@ -260,12 +89,6 @@ const HaatzaNavbar = ({ seller = {} }) => {
         !e.target.closest(".mobile-search-icon-btn")
       ) {
         setMobileSearchOpen(false);
-      }
-      if (!e.target.closest(".notif-dropdown-container")) {
-        setNotifDropdownOpen(false);
-      }
-      if (!e.target.closest(".wallet-dropdown-container")) {
-        setWalletDropdownOpen(false);
       }
       if (!e.target.closest(".reminders-dropdown-container")) {
         setRemindersDropdownOpen(false);
@@ -416,34 +239,32 @@ const HaatzaNavbar = ({ seller = {} }) => {
           React.createElement(
             "div", { className: "icon-group" },
 
-            /* Notifications Icon + Panel */
+            /* Notifications Icon */
             React.createElement(
-              "div", { className: "notif-dropdown-container" },
+              "div", { className: "notif-icon-container" },
               React.createElement(
                 "button", 
                 { 
-                  className: `icon-btn ${notifDropdownOpen ? "active" : ""}`, 
+                  className: `icon-btn ${location.pathname === "/notifications" ? "active" : ""}`, 
                   title: "Notifications",
-                  onClick: toggleNotifDropdown 
+                  onClick: () => navigate("/notifications") 
                 },
                 React.createElement(Bell, { size: 20 })
-              ),
-              notifDropdownOpen && NotifDropdownMenu()
+              )
             ),
 
-            /* Wallet Icon + Panel */
+            /* Wallet Icon */
             React.createElement(
-              "div", { className: "wallet-dropdown-container" },
+              "div", { className: "wallet-icon-container" },
               React.createElement(
                 "button", 
                 { 
-                  className: `icon-btn ${walletDropdownOpen ? "active" : ""}`, 
+                  className: `icon-btn ${location.pathname === "/wallet" ? "active" : ""}`, 
                   title: "Wallet",
-                  onClick: toggleWalletDropdown 
+                  onClick: () => navigate("/wallet") 
                 },
                 React.createElement(Wallet, { size: 20 })
-              ),
-              walletDropdownOpen && WalletDropdownMenu()
+              )
             ),
 
             /* Messages Icon + Panel */

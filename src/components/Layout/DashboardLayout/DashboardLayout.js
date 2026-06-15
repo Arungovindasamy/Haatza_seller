@@ -1,6 +1,8 @@
 // DashboardLayout.js  (updated — added ReviewSubmitPage routes)
 import React, { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { sellerService } from "../../../services/sellerService";
+import { getSellerId } from "../../../utils/sellerSession";
 
 import HaatzaNavbar  from "../Navbar/Navbar";
 import Sidebar       from "../Sidebar/Sidebar";
@@ -48,38 +50,66 @@ const resolveSellerEmail = (locationState) => {
     } catch { /* not JSON */ }
   }
 
-  console.warn("[DashboardLayout] ⚠️ No seller email found in any storage. Defaulting to teezaastyleyourtees@gmail.com.");
-  return "teezaastyleyourtees@gmail.com";
+  console.warn("[DashboardLayout] ⚠️ No seller email found in any storage.");
+  return "";
 };
 
 // ─── Seller display data ───────────────────────────────────────────────────────
 const useSellerDisplayData = (resolvedEmail) => {
   const [seller, setSeller] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(resolvedEmail ? true : false);
 
   useEffect(() => {
-    const email = resolvedEmail || "teezaastyleyourtees@gmail.com";
-    const isTeezaa = email.toLowerCase().includes("teezaa");
-    const name = isTeezaa ? "Teezaa" : "Seller";
-    const displayData = {
-      name:          name,
-      email:         email,
-      role:          "Seller",
-      avatarInitial: name[0].toUpperCase(),
-      logoUrl:       null,
-    };
-    console.log("[DashboardLayout] Seller display data:", displayData);
-    setSeller(displayData);
+    if (!resolvedEmail) {
+      setSeller(null);
+      setLoadingProfile(false);
+      return;
+    }
+    setLoadingProfile(true);
+    sellerService.getUserProfile(resolvedEmail)
+      .then((res) => {
+        const p = res?.message || res?.data || res || {};
+        const foundSellerId = p.sellerId || p.seller_id || p.uid || p.id;
+        if (foundSellerId) {
+          const sid = String(foundSellerId).trim();
+          localStorage.setItem("sellerId", sid);
+          sessionStorage.setItem("sellerId", sid);
+          localStorage.setItem("__haatza_sellerId", sid);
+          sessionStorage.setItem("__haatza_sellerId", sid);
+        }
+        setSeller({
+          name: p.sellerName || p.companyName || "Seller",
+          email: resolvedEmail,
+          role: "Seller",
+          avatarInitial: (p.sellerName || p.companyName || "Seller")[0].toUpperCase(),
+          logoUrl: null,
+        });
+      })
+      .catch((err) => {
+        console.warn("[DashboardLayout] getUserProfile failed, using fallback display:", err);
+        setSeller({
+          name: "Seller",
+          email: resolvedEmail,
+          role: "Seller",
+          avatarInitial: "S",
+          logoUrl: null,
+        });
+      })
+      .finally(() => {
+        setLoadingProfile(false);
+      });
   }, [resolvedEmail]);
 
-  return { seller };
+  return { seller, loadingProfile };
 };
 
 // ─── Main Layout ───────────────────────────────────────────────────────────────
 function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const sellerEmail = resolveSellerEmail(location.state);
-  const { seller }  = useSellerDisplayData(sellerEmail);
+  const { seller, loadingProfile }  = useSellerDisplayData(sellerEmail);
 
   const [sidebarOpen,      setSidebarOpen]      = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -99,6 +129,92 @@ function DashboardLayout() {
   const handleSidebarToggle  = () => setSidebarOpen(prev => !prev);
   const handleSidebarClose   = () => { if (isMobile) setSidebarOpen(false); };
   const handleCollapseChange = (collapsed) => setSidebarCollapsed(collapsed);
+
+  const activeSellerId = getSellerId();
+
+  if (loadingProfile && !activeSellerId) {
+    return (
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        width: "100%",
+        backgroundColor: "#f5f7ff"
+      }}>
+        <div style={{
+          width: 36,
+          height: 36,
+          border: "3px solid #e5e7eb",
+          borderTopColor: "#2962ff",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite",
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (!sellerEmail || (!loadingProfile && !activeSellerId)) {
+    return (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        backgroundColor: "#f5f7ff",
+        fontFamily: "Inter, sans-serif",
+        padding: "24px",
+        textAlign: "center"
+      }}>
+        <div style={{
+          background: "#ffffff",
+          borderRadius: "16px",
+          padding: "40px",
+          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.05)",
+          maxWidth: "440px",
+          width: "100%"
+        }}>
+          <div style={{
+            color: "#ef4444",
+            fontSize: "48px",
+            marginBottom: "16px"
+          }}>⚠️</div>
+          <h2 style={{
+            fontSize: "22px",
+            fontWeight: "700",
+            color: "#1f2937",
+            marginBottom: "12px"
+          }}>Session Expired</h2>
+          <p style={{
+            color: "#6b7280",
+            fontSize: "14px",
+            lineHeight: "1.5",
+            marginBottom: "24px"
+          }}>Seller session not found. Please login again.</p>
+          <button
+            onClick={() => navigate("/signin")}
+            style={{
+              backgroundColor: "#2563eb",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              padding: "12px 24px",
+              fontWeight: "600",
+              fontSize: "14px",
+              cursor: "pointer",
+              transition: "background-color 0.2s"
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#1d4ed8"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "#2563eb"}
+          >
+            Go to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

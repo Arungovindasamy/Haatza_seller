@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SignInForm from "../../components/auth/SignInForm/SignInForm";
-import { checkSeller } from "../../api/sellerApi";
-import { checkOnboardStatus } from "../../api/OnboardStatusApi";
+import { checkSeller, checkOnboardStatus, getUserProfile } from "../../services/sellerService";
 function SignInPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,10 +14,10 @@ function SignInPage() {
   const [error,           setError]           = useState("");
   const [loading,         setLoading]         = useState(false);
 
-  // ─── Prefill contact from OTP "Change Number" flow ───────────────────────
   useEffect(() => {
     const prefill = location.state?.prefillContact;
     if (prefill) setContact(prefill);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ─── Handle Continue (email/phone check) ─────────────────────────────────
@@ -95,6 +94,22 @@ function SignInPage() {
       // localStorage   → survives page refresh (MyListings fallback)
       sessionStorage.setItem("pendingEmail", emailForStatus);
       localStorage.setItem("userEmail",      emailForStatus);
+
+      // Pre-fetch profile to resolve and store sellerId
+      try {
+        const profileRes = await getUserProfile(emailForStatus);
+        const p = profileRes?.message || profileRes?.data || profileRes || {};
+        const foundSellerId = p.sellerId || p.seller_id || p.uid || p.id;
+        if (foundSellerId) {
+          const sid = String(foundSellerId).trim();
+          localStorage.setItem("sellerId", sid);
+          sessionStorage.setItem("sellerId", sid);
+          localStorage.setItem("__haatza_sellerId", sid);
+          sessionStorage.setItem("__haatza_sellerId", sid);
+        }
+      } catch (err) {
+        console.warn("[SignInPage] Pre-fetching profile for sellerId failed:", err);
+      }
       
       const isOnboarded = await checkOnboardStatus(emailForStatus);
 
