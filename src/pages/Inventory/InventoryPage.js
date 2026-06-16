@@ -1,206 +1,40 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import InventoryStats from "./components/InventoryStats";
 import InventoryFilters from "./components/InventoryFilters";
 import InventoryTable from "./components/InventoryTable";
 import { getSellerId } from "../../utils/sellerSession";
-import { sellerService, resolveWixImage } from "../../services/sellerService";
+import { useInventoryViewModel } from "./hooks/useInventoryViewModel";
 import "./InventoryPage.css";
 
 const InventoryPage = () => {
   const sellerId = getSellerId();
   
-  const [inventory, setInventory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("in_stock"); // default to In Stock tab
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const {
+    filteredItems,
+    loading,
+    error,
+    setError,
+    searchRaw,
+    handleSearchChange,
+    statusFilter,
+    setStatusFilter,
+    categoryFilter,
+    setCategoryFilter,
+    categories,
+    stats,
+    handleSaveQuantity,
+    handleRefresh,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    limit,
+  } = useInventoryViewModel(sellerId);
 
-  // Load Inventory from API
-  const loadInventory = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await sellerService.fetchInventoryData(sellerId);
-      
-      // Safe nested response structure parsing as requested
-      const rawItems =
-        data?.inventoryItems ||
-        data?.message?.inventoryItems ||
-        data?.message?.body?.inventoryItems ||
-        data?.message?.data ||
-        data?.data ||
-        [];
-        
-      // Print temporary debug logs as requested
-      console.log("SELLER ID:", sellerId);
-      console.log("INVENTORY API RESPONSE:", data);
-      console.log("RAW INVENTORY ITEMS:", rawItems);
-
-      // Map backend fields safely to frontend schema
-      const mappedItems = [];
-      rawItems.forEach((product, prodIndex) => {
-        if (!product) return;
-        const pId = product.productId || product.externalId || "";
-        const pName = product.productName || product.name || "Unnamed Product";
-        
-        const media = product.mainMedia || product.mainmedia || product.mainImage || product.image || "";
-        const pImg = resolveWixImage(media) || media || "";
-        
-        const pCat = product.category || product.categoryName || "General";
-        const variants = product.variants || [];
-
-        if (variants.length === 0) {
-          const id = product.id || product._id || product.variantId || `inv-${prodIndex}-${Date.now()}`;
-          const variantName = product.variant || product.variantName || product.size || product.choices?.Size || "Standard";
-          const sku = product.sku || `SKU-${id}`;
-          const stock = Number(
-            product.quantity !== undefined
-              ? product.quantity
-              : (product.stock?.quantity !== undefined
-                  ? product.stock.quantity
-                  : (product.stock !== undefined ? product.stock : (product.inventoryQuantity !== undefined ? product.inventoryQuantity : 0)))
-          );
-          mappedItems.push({
-            id,
-            productId: pId,
-            name: pName,
-            variant: variantName,
-            sku,
-            stock,
-            category: pCat,
-            image: pImg,
-          });
-        } else {
-          variants.forEach((v, vIndex) => {
-            if (!v) return;
-            const id = v.variantId || v.id || v._id || `var-${prodIndex}-${vIndex}-${Date.now()}`;
-            const variantName =
-              v.choices?.Size ||
-              v.choices?.size ||
-              v.variant ||
-              v.size ||
-              v.variantName ||
-              (v.choices ? Object.values(v.choices).join(" / ") : "") ||
-              "Standard";
-            
-            const sku = v.sku || product.sku || `SKU-${id}`;
-            const stock = Number(
-              v.quantity !== undefined
-                ? v.quantity
-                : (v.stock?.quantity !== undefined
-                    ? v.stock.quantity
-                    : (v.stock !== undefined ? v.stock : (v.inventoryQuantity !== undefined ? v.inventoryQuantity : 0)))
-            );
-            
-            mappedItems.push({
-              id,
-              productId: pId,
-              name: pName,
-              variant: variantName,
-              sku,
-              stock,
-              category: pCat,
-              image: pImg,
-            });
-          });
-        }
-      });
-
-      setInventory(mappedItems);
-    } catch (err) {
-      console.error("[InventoryPage] API loading failed:", err);
-      setError(err.message || "Could not load inventory from the backend server.");
-      setInventory([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [sellerId]);
-
-  useEffect(() => {
-    loadInventory();
-  }, [loadInventory]);
-
-  // Calculate unique categories dynamically
-  const categories = useMemo(() => {
-    return Array.from(new Set(inventory.map((item) => item.category).filter(Boolean)));
-  }, [inventory]);
-
-  // Calculate stats dynamically based on the current dataset
-  const stats = useMemo(() => {
-    const uniqueProducts = new Set(inventory.map((item) => item.name));
-    const totalProducts = uniqueProducts.size;
-    const totalVariants = inventory.length;
-    const inStockVariants = inventory.filter((item) => item.stock > 0).length;
-    const outOfStockVariants = inventory.filter((item) => item.stock === 0).length;
-
-    return {
-      totalProducts,
-      totalVariants,
-      inStockVariants,
-      outOfStockVariants,
-    };
-  }, [inventory]);
-
-  // Handle quantity save action for a row
-  const handleSaveQuantity = async (id, newQty) => {
-    const item = inventory.find((x) => x.id === id);
-    if (!item) return;
-
-    try {
-      setError(null);
-      const delta = newQty - item.stock;
-      if (delta === 0) return;
-
-      const absQty = Math.abs(delta);
-      if (delta > 0) {
-        await sellerService.incrementInventory(sellerId, item.productId, item.id, absQty);
-      } else {
-        await sellerService.decrementInventory(sellerId, item.productId, item.id, absQty);
-      }
-
-      setInventory((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, stock: newQty } : x))
-      );
-    } catch (err) {
-      console.error("[InventoryPage] Save failed:", err);
-      setError(err.message || "Failed to update inventory quantity on the server.");
-    }
-  };
-
-  // Handle refresh
-  const handleRefresh = () => {
-    setSearch("");
-    setStatusFilter("in_stock");
-    setCategoryFilter("all");
-    loadInventory();
-  };
-
-  // Filter items based on search query, dropdown filters, and tab selection
-  const filteredItems = useMemo(() => {
-    return inventory.filter((item) => {
-      // 1. Search filter
-      const matchesSearch =
-        search.trim() === "" ||
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.sku.toLowerCase().includes(search.toLowerCase()) ||
-        item.variant.toLowerCase().includes(search.toLowerCase());
-
-      // 2. Status filter
-      let matchesStatus = true;
-      if (statusFilter === "in_stock") {
-        matchesStatus = item.stock > 0;
-      } else if (statusFilter === "out_of_stock") {
-        matchesStatus = item.stock === 0;
-      }
-
-      // 3. Category filter
-      const matchesCategory =
-        categoryFilter === "all" || item.category === categoryFilter;
-
-      return matchesSearch && matchesStatus && matchesCategory;
-    });
-  }, [inventory, search, statusFilter, categoryFilter]);
+  // Calculate items range shown
+  const fromItem = totalItems === 0 ? 0 : (page - 1) * limit + 1;
+  const toItem = Math.min(page * limit, totalItems);
 
   return (
     <div className="inv-page-root">
@@ -229,8 +63,8 @@ const InventoryPage = () => {
       <div className="inv-card">
         <div className="inv-card-body">
           <InventoryFilters
-            search={search}
-            onSearchChange={setSearch}
+            search={searchRaw}
+            onSearchChange={handleSearchChange}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             categoryFilter={categoryFilter}
@@ -271,10 +105,42 @@ const InventoryPage = () => {
               <p>Fetching inventory from server...</p>
             </div>
           ) : (
-            <InventoryTable
-              items={filteredItems}
-              onSaveQuantity={handleSaveQuantity}
-            />
+            <>
+              <InventoryTable
+                items={filteredItems}
+                onSaveQuantity={handleSaveQuantity}
+              />
+              
+              {/* Pagination Controls */}
+              {!error && filteredItems.length > 0 && (
+                <div className="inv-pagination">
+                  <div className="inv-pagination-info">
+                    Showing <span>{fromItem}–{toItem}</span> of <span>{totalItems}</span> products
+                  </div>
+                  <div className="inv-pagination-controls">
+                    <button
+                      type="button"
+                      className="inv-page-btn"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      <ChevronLeft size={14} /> Previous
+                    </button>
+                    <span className="inv-page-indicator">
+                      Page <span>{page}</span> of <span>{totalPages}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="inv-page-btn"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

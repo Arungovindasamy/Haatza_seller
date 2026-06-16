@@ -4,6 +4,11 @@ import { sellerService } from "../../services/sellerService";
 import { resolveSellerId } from "../../utils/sellerSession";
 import "./SettlementsPage.css";
 
+const formatCurrency = (value) => {
+  const amount = Number(value);
+  return `₹${Number.isFinite(amount) ? amount.toFixed(2) : "0.00"}`;
+};
+
 const SettlementsPage = () => {
   const [rawTransactions, setRawTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +18,7 @@ const SettlementsPage = () => {
   const [selectedTx, setSelectedTx] = useState(null);
   const [settlementSummary, setSettlementSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
-  
+
   // Date Picker Modal State
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date(2026, 5)); // June 2026 (matching screenshots)
@@ -21,19 +26,10 @@ const SettlementsPage = () => {
 
   // Fetch data
   const loadSettlements = useCallback(async () => {
-    const resolvedSellerId = (resolveSellerId() || "").trim();
-    if (!resolvedSellerId || resolvedSellerId === "null" || resolvedSellerId === "undefined") {
-      console.warn("[SettlementsPage] Missing sellerId. API call skipped.");
-      setError("Seller session not found. Please login again.");
-      setRawTransactions([]);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
     try {
-      const response = await sellerService.getSellerPayments(resolvedSellerId);
+      const response = await sellerService.getSellerPayments();
       const list = response?.message?.data || response?.data || response?.message || response || [];
       setRawTransactions(Array.isArray(list) ? list : []);
     } catch (err) {
@@ -71,7 +67,7 @@ const SettlementsPage = () => {
       const dateVal = tx.paymentDate || tx.createdDate || tx.date;
       const status = tx.status || "Paid";
       const type = tx.type || "Debit";
-      
+
       const categoryId = tx.categoryId || tx.category_id || tx.category || "";
       const deliveryCharges = tx.deliveryCharges ?? tx.delivery_charges ?? tx.deliveryCharge ?? true;
       const shippingWeight = tx.shippingWeight ?? tx.shipping_weight ?? tx.weight ?? 0;
@@ -101,7 +97,7 @@ const SettlementsPage = () => {
     return mappedTransactions.filter((tx) => {
       // 1. Tab partitioning
       const tabMatch = activeTab === "upcoming" ? tx.isUpcoming : !tx.isUpcoming;
-      
+
       // 2. Search query filter
       const searchMatch =
         search.trim() === "" ||
@@ -201,10 +197,10 @@ const SettlementsPage = () => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const days = new Date(year, month + 1, 0).getDate();
-    
+
     // Get starting day of the week (0 = Sunday, 1 = Monday, etc.)
     const startDay = new Date(year, month, 1).getDay();
-    
+
     return { days, startDay };
   };
 
@@ -250,10 +246,10 @@ const SettlementsPage = () => {
                 className="search-input"
               />
             </div>
-            
+
             <div className="date-filter-container">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-date-filter"
                 onClick={() => setShowDatePicker(prev => !prev)}
               >
@@ -261,7 +257,7 @@ const SettlementsPage = () => {
                 <span>{selectedDay} {selectedMonth.toLocaleDateString("en-US", { month: "short" })} {selectedMonth.getFullYear()}</span>
                 <ChevronDown size={14} className={`chevron ${showDatePicker ? "rotate" : ""}`} />
               </button>
-              
+
               {/* Floating Date Picker Dropdown */}
               {showDatePicker && (
                 <div className="datepicker-popover">
@@ -274,19 +270,19 @@ const SettlementsPage = () => {
                       <ChevronRight size={16} />
                     </button>
                   </div>
-                  
+
                   <div className="calendar-weekdays">
                     {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
                       <span key={i} className="weekday-label">{d}</span>
                     ))}
                   </div>
-                  
+
                   <div className="calendar-days-grid">
                     {/* Render empty cells for padding */}
                     {Array.from({ length: startingDay }).map((_, i) => (
                       <span key={`empty-${i}`} className="calendar-day-empty" />
                     ))}
-                    
+
                     {/* Render days of month */}
                     {Array.from({ length: daysCount }).map((_, i) => {
                       const dayNum = i + 1;
@@ -306,10 +302,10 @@ const SettlementsPage = () => {
                       );
                     })}
                   </div>
-                  
+
                   <div className="datepicker-footer">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="datepicker-btn-confirm"
                       onClick={() => setShowDatePicker(false)}
                     >
@@ -371,7 +367,7 @@ const SettlementsPage = () => {
                   {filteredTransactions.map((tx) => (
                     <tr key={tx.id}>
                       <td className="font-semibold text-gray-800">#{tx.orderId}</td>
-                      <td className="font-bold text-emerald-600">₹{tx.amount.toFixed(2)}</td>
+                      <td className="font-bold text-emerald-600">{formatCurrency(tx.amount)}</td>
                       <td>{tx.paymentDate}</td>
                       <td>
                         <span className="settlement-status-badge">
@@ -406,12 +402,12 @@ const SettlementsPage = () => {
                 <X size={20} />
               </button>
             </div>
-                        <div className="modal-body">
+            <div className="modal-body">
               <div className="modal-info-row">
                 <span className="info-label font-bold">Order ID:</span>
                 <span className="info-value font-bold text-gray-800">#{selectedTx.orderId}</span>
               </div>
-              
+
               <div className="modal-divider" />
 
               {loadingSummary ? (
@@ -423,63 +419,63 @@ const SettlementsPage = () => {
                 <>
                   <div className="modal-info-row">
                     <span className="info-label">Selling Price</span>
-                    <span className="info-value">₹{settlementSummary.sellingPrice.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.sellingPrice)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">Product GST</span>
-                    <span className="info-value">₹{settlementSummary.productGST.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.productGST)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">TCS</span>
-                    <span className="info-value">₹{settlementSummary.tcs.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.tcs)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">TDS</span>
-                    <span className="info-value">₹{settlementSummary.tds.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.tds)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">Haatza Commission</span>
-                    <span className="info-value">₹{settlementSummary.commission.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.commission)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">GST on Commission</span>
-                    <span className="info-value">₹{settlementSummary.gstOnCommission.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.gstOnCommission)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">Payment Gateway Charges</span>
-                    <span className="info-value">₹{settlementSummary.pgCharges.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.pgCharges)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">GST on PG Charges</span>
-                    <span className="info-value">₹{settlementSummary.gstOnPgCharges.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.gstOnPgCharges)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">Shipping Fee</span>
-                    <span className="info-value">₹{settlementSummary.shippingFee.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.shippingFee)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">GST on Shipping</span>
-                    <span className="info-value">₹{settlementSummary.gstOnShippingFee.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.gstOnShippingFee)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">Fixed Fee</span>
-                    <span className="info-value">₹{settlementSummary.fixedFee.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.fixedFee)}</span>
                   </div>
                   <div className="modal-info-row">
                     <span className="info-label">Handling Fee</span>
-                    <span className="info-value">₹{settlementSummary.handlingFee.toFixed(2)}</span>
+                    <span className="info-value">{formatCurrency(settlementSummary.handlingFee)}</span>
                   </div>
-                  
+
                   <div className="modal-divider" />
-                  
+
                   <div className="modal-info-row debit-row">
                     <span className="info-label font-bold">Total Debit</span>
-                    <span className="info-value font-bold">₹{settlementSummary.totalDebit.toFixed(2)}</span>
+                    <span className="info-value font-bold">{formatCurrency(settlementSummary.totalDebit)}</span>
                   </div>
-                  
+
                   <div className="modal-info-row settlement-row">
                     <span className="info-label font-bold text-emerald-600">Settlement Amount</span>
-                    <span className="info-value font-bold text-emerald-600">₹{settlementSummary.settlementAmount.toFixed(2)}</span>
+                    <span className="info-value font-bold text-emerald-600">{formatCurrency(settlementSummary.settlementAmount)}</span>
                   </div>
 
                   {settlementSummary.note && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
@@ -39,12 +39,17 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchingRef = useRef(false);
+
   const loadDashboardData = useCallback(async () => {
     if (!sellerId || !sellerEmail) {
       setError("Seller session not found. Please login again.");
       setLoading(false);
       return;
     }
+
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
 
     setLoading(true);
     setError(null);
@@ -135,6 +140,7 @@ const DashboardPage = () => {
       console.error("[DashboardPage] Fetch data failed:", err);
       setError("Failed to load dashboard statistics. Please verify your connection.");
     } finally {
+      fetchingRef.current = false;
       setLoading(false);
     }
   }, [sellerId, sellerEmail]);

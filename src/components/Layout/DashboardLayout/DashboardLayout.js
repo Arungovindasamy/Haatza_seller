@@ -1,5 +1,5 @@
 // DashboardLayout.js  (updated — added ReviewSubmitPage routes)
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { sellerService } from "../../../services/sellerService";
 import { getSellerId } from "../../../utils/sellerSession";
@@ -126,9 +126,9 @@ function DashboardLayout() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  const handleSidebarToggle  = () => setSidebarOpen(prev => !prev);
-  const handleSidebarClose   = () => { if (isMobile) setSidebarOpen(false); };
-  const handleCollapseChange = (collapsed) => setSidebarCollapsed(collapsed);
+  const handleSidebarToggle  = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const handleSidebarClose   = useCallback(() => { if (isMobile) setSidebarOpen(false); }, [isMobile]);
+  const handleCollapseChange = useCallback((collapsed) => setSidebarCollapsed(collapsed), []);
 
   const activeSellerId = getSellerId();
 

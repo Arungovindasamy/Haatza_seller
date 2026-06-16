@@ -8,8 +8,10 @@ export const resolveSellerEmailForApi = resolveSellerEmail;
 // Safely check environment for both Vite and Webpack/CRA compatibility
 const checkDev = () => {
   try {
-    if (import.meta.env && import.meta.env.DEV !== undefined) {
-      return import.meta.env.DEV;
+    // eslint-disable-next-line no-new-func
+    const meta = new Function("return import.meta")();
+    if (meta && meta.env && meta.env.DEV !== undefined) {
+      return meta.env.DEV;
     }
   } catch {}
   try {
@@ -738,11 +740,22 @@ export const checkGSTINExists = async (gstin) => {
    // INVENTORY APIs
    ============================================================================= */
 
-export const fetchInventoryData = async (sellerId, page = 1, searchText = "") => {
+export const fetchInventoryData = async (sellerId, page = 1, searchText = "", signal = null) => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
   const response = await axios.get(SELLER_PRODUCT_INVENTORY_API, {
     params: { sellerId: resolvedSellerId, page, searchText },
     timeout: 15000,
+    signal,
+  });
+  return response.data;
+};
+
+export const getSellerProductInventory = async ({ sellerId, page = 1, searchText = "", signal = null }) => {
+  const resolvedSellerId = getOrResolveSellerId(sellerId);
+  const response = await axios.get(SELLER_PRODUCT_INVENTORY_API, {
+    params: { sellerId: resolvedSellerId, page, searchText },
+    timeout: 15000,
+    signal,
   });
   return response.data;
 };
@@ -2073,46 +2086,96 @@ export const fetchCategoryFields = async (categoryId) => {
    // WALLET APIs
    ============================================================================= */
 
+export const walletService = {
+  checkWalletBalance: async (sellerId) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/checkWalletBalance`, {
+        params: { sellerId },
+      });
+      return res.data;
+    } catch (error) {
+      return {
+        status: "error",
+        message: { RemainingBalance: 0 },
+        error: error.message
+      };
+    }
+  },
+
+  transactionHistory: async (sellerId) => {
+    const res = await axios.get(`${API_BASE_URL}/transactionHistory`, {
+      params: { sellerId },
+    });
+    return res.data;
+  },
+
+  addFunds: async (payload) => {
+    const res = await axios.post(`${API_BASE_URL}/addFunds`, payload);
+    return res.data;
+  },
+
+  createRazorpayOrder: async (payload) => {
+    const res = await axios.post(`${API_BASE_URL}/createRazorpayOrder`, payload);
+    return res.data;
+  },
+
+  verifyRazorpayPayment: async (payload) => {
+    const res = await axios.post(`${API_BASE_URL}/verifyRazorpayPayment`, payload);
+    return res.data;
+  },
+
+  getCampaignSummary: async (sellerId) => {
+    const res = await axios.get(`${API_BASE_URL}/Campaignsummery`, {
+      params: { sellerId }
+    });
+    return res.data;
+  },
+};
+
 export const checkWalletBalance = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(CHECK_WALLET_BALANCE_API, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 10000,
-  });
-  return response.data;
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    return await walletService.checkWalletBalance(resolvedSellerId);
+  } catch (error) {
+    console.warn("[API Failed]", "checkWalletBalance", error.response?.status, error.response?.data || error.message);
+    return {
+      status: "error",
+      message: { RemainingBalance: 0 },
+      error: error.message
+    };
+  }
 };
 
 export const getTransactionHistory = async (sellerId) => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(TRANSACTION_HISTORY_API, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
-  });
-  return response.data;
+  return walletService.transactionHistory(resolvedSellerId);
 };
 
-export const addFunds = async (sellerId, amount) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.post(
-    ADD_FUNDS_API,
-    { sellerId: resolvedSellerId, amount: Number(amount) },
-    { headers: { "Content-Type": "application/json" }, timeout: 10000 }
-  );
-  return response.data;
+export const addFunds = async (sellerIdOrPayload, amount) => {
+  if (typeof sellerIdOrPayload === "object") {
+    return walletService.addFunds(sellerIdOrPayload);
+  }
+  const resolvedSellerId = getOrResolveSellerId(sellerIdOrPayload);
+  return walletService.addFunds({ sellerId: resolvedSellerId, amount: Number(amount) });
 };
 
 export const getWalletSummary = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(`${API_BASE_URL}/checkWalletBalance`, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 10000,
-  });
-  return response.data;
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    return await walletService.checkWalletBalance(resolvedSellerId);
+  } catch (error) {
+    console.warn("[API Failed]", "getWalletSummary", error.response?.status, error.response?.data || error.message);
+    return {
+      status: "error",
+      message: { RemainingBalance: 0 },
+      error: error.message
+    };
+  }
 };
 
 export const getWalletTransactions = async (sellerId) => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
-  return getTransactionHistory(resolvedSellerId);
+  return walletService.transactionHistory(resolvedSellerId);
 };
 
 export const getCampaignSpends = async (sellerId) => {
@@ -2139,38 +2202,22 @@ export const getCampaignSpends = async (sellerId) => {
 
 export const createWalletOrder = async (sellerId, amount) => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.post(
-    `${API_BASE_URL}/createRazorpayOrder`,
-    { sellerId: resolvedSellerId, amount: Number(amount) },
-    { headers: { "Content-Type": "application/json" }, timeout: 10000 }
-  );
-  return response.data;
+  return walletService.createRazorpayOrder({ sellerId: resolvedSellerId, amount: Number(amount) });
 };
 
 export const verifyWalletPayment = async (sellerId, paymentResponse) => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.post(
-    `${API_BASE_URL}/verifyRazorpayPayment`,
-    { sellerId: resolvedSellerId, ...paymentResponse },
-    { headers: { "Content-Type": "application/json" }, timeout: 10000 }
-  );
-  return response.data;
+  return walletService.verifyRazorpayPayment({ sellerId: resolvedSellerId, ...paymentResponse });
 };
 
 export const fetchWalletBalance = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
   try {
-    const response = await axios.get(`${API_BASE_URL}/checkWalletBalance`, {
-      params: { sellerId: resolvedSellerId },
-      timeout: 10_000,
-    });
-    if (response.data?.status === "success") {
-      return Number(response.data?.message?.RemainingBalance || 0);
-    }
-    return 0;
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const data = await walletService.checkWalletBalance(resolvedSellerId);
+    return Number(data?.message?.RemainingBalance || data?.RemainingBalance || 0);
   } catch (err) {
     console.error("[fetchWalletBalance] Error fetching balance:", err);
-    throw new Error("Unable to fetch wallet balance.");
+    return 0;
   }
 };
 
@@ -2181,13 +2228,37 @@ export const getSellerTutorials = async () => {
   return response.data;
 };
 
+export const getSellerTickets = async ({ sellerId, emailId, fromDate, toDate }) => {
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const resolvedEmail = emailId || resolveSellerEmailForApi();
+    const response = await axios.get(`${API_BASE_URL}/sellertickets`, {
+      params: {
+        sellerId: resolvedSellerId,
+        emailId: resolvedEmail || "",
+        email: resolvedEmail || "",
+        fromDate,
+        toDate
+      },
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getSellerTickets", error.response?.status, error.response?.data || error.message);
+    return { status: "success", tickets: [], data: [], message: { data: [] } };
+  }
+};
+
 export const getTickets = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(`${API_BASE_URL}/sellertickets`, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
-  });
-  return response.data;
+  const email = resolveSellerEmailForApi();
+  const now = new Date();
+  const fromDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
+  const toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    .toISOString()
+    .split("T")[0];
+  return getSellerTickets({ sellerId, emailId: email, fromDate, toDate });
 };
 
 export const createTicket = async (sellerId, payload) => {
@@ -2201,53 +2272,81 @@ export const createTicket = async (sellerId, payload) => {
 };
 
 export const getSellerNewOrders = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(`${API_BASE_URL}/sellernewOrders`, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
-  });
-  return response.data;
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const response = await axios.get(`${API_BASE_URL}/sellernewOrders`, {
+      params: { sellerId: resolvedSellerId },
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getSellerNewOrders", error.response?.status, error.response?.data || error.message);
+    return { status: "success", count: 0, data: [], message: [] };
+  }
 };
 
 export const getSellerPayments = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(`${API_BASE_URL}/sellerpayments`, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
-  });
-  return response.data;
+  try {
+    const resolvedEmail = resolveSellerEmailForApi();
+    if (!resolvedEmail) {
+      throw new Error("Seller email not found. Please login again.");
+    }
+    const response = await axios.get(`${API_BASE_URL}/sellerpayments`, {
+      params: { email: resolvedEmail },
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getSellerPayments", error.response?.status, error.response?.data || error.message);
+    return { status: "success", data: [], message: [] };
+  }
 };
 
 export const getSellerConfirmedOrdersCount = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(`${API_BASE_URL}/sellerConfirmedOrdersCount`, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
-  });
-  return response.data;
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const response = await axios.get(`${API_BASE_URL}/sellerConfirmedOrdersCount`, {
+      params: { sellerId: resolvedSellerId },
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getSellerConfirmedOrdersCount", error.response?.status, error.response?.data || error.message);
+    return { status: "success", count: 0, message: { count: 0 } };
+  }
 };
 
 export const getTopSellingProducts = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(`${API_BASE_URL}/getTopSellingProducts`, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
-  });
-  return response.data;
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const response = await axios.get(`${API_BASE_URL}/getTopSellingProducts`, {
+      params: { sellerId: resolvedSellerId },
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getTopSellingProducts", error.response?.status, error.response?.data || error.message);
+    return { status: "success", data: [], message: [] };
+  }
 };
 
 export const getProductStats = async (sellerIdOrTableId) => {
-  const params = {};
-  if (sellerIdOrTableId && sellerIdOrTableId.startsWith("HS")) {
-    params.sellerId = sellerIdOrTableId;
-  } else {
-    params.tableId = sellerIdOrTableId;
+  try {
+    const params = {};
+    if (sellerIdOrTableId && sellerIdOrTableId.startsWith("HS")) {
+      params.sellerId = sellerIdOrTableId;
+    } else {
+      params.tableId = sellerIdOrTableId;
+    }
+    const response = await axios.get(`${API_BASE_URL}/getProductStats`, {
+      params,
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getProductStats", error.response?.status, error.response?.data || error.message);
+    return { status: "success", data: {}, message: {} };
   }
-  const response = await axios.get(`${API_BASE_URL}/getProductStats`, {
-    params,
-    timeout: 15000,
-  });
-  return response.data;
 };
 
 export const fetchWalletTransactions = async (sellerId) => {
@@ -2326,14 +2425,51 @@ export const getAdvertisements = async (sellerId) => {
 };
 
 export const getAdvertisementSummary = async (sellerId) => {
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const response = await axios.get(CAMPAIGN_SUMMARY_API, {
+      params: { sellerId: resolvedSellerId },
+      timeout: 15000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getAdvertisementSummary", error.response?.status, error.response?.data || error.message);
+    return { status: "success", data: {}, message: {} };
+  }
+};
+export const getSellerCampaigns = async (sellerId) => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(CAMPAIGN_SUMMARY_API, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 15000,
+  const res = await axios.get(`${API_BASE_URL}/sellerCampaigns`, {
+    params: { sellerId: resolvedSellerId }
   });
-  return response.data;
+  return res.data;
 };
 
+export const getCampaignDetails = async (tableId, fromAndToDate = "") => {
+  let params = { tableId };
+  if (fromAndToDate) {
+    if (typeof fromAndToDate === "string") {
+      const searchParams = new URLSearchParams(fromAndToDate.startsWith("&") ? fromAndToDate.substring(1) : fromAndToDate);
+      for (const [key, val] of searchParams.entries()) {
+        params[key] = val;
+      }
+    } else if (typeof fromAndToDate === "object") {
+      params = { ...params, ...fromAndToDate };
+    }
+  }
+  const res = await axios.get(`${API_BASE_URL}/campaignDetails`, {
+    params
+  });
+  return res.data;
+};
+
+export const getCampaignSummary = async (sellerId) => {
+  const resolvedSellerId = getOrResolveSellerId(sellerId);
+  const res = await axios.get(`${API_BASE_URL}/Campaignsummery`, {
+    params: { sellerId: resolvedSellerId }
+  });
+  return res.data;
+};
 export const getAdvertisementPerformance = async (sellerId, campaignId, fromAndToDate = "") => {
   const resolvedSellerId = getOrResolveSellerId(sellerId);
   const params = { tableId: campaignId, sellerId: resolvedSellerId };
@@ -2672,12 +2808,17 @@ export const uploadHaatzUpReel = uploadHaatzupVideo;
    ============================================================================= */
 
 export const getNotifications = async (sellerId) => {
-  const resolvedSellerId = getOrResolveSellerId(sellerId);
-  const response = await axios.get(NOTIFICATIONS_API, {
-    params: { sellerId: resolvedSellerId },
-    timeout: 10000,
-  });
-  return response.data;
+  try {
+    const resolvedSellerId = getOrResolveSellerId(sellerId);
+    const response = await axios.get(NOTIFICATIONS_API, {
+      params: { sellerId: resolvedSellerId },
+      timeout: 10000,
+    });
+    return response.data;
+  } catch (error) {
+    console.warn("[API Failed]", "getNotifications", error.response?.status, error.response?.data || error.message);
+    return { status: "success", data: [], message: { data: [] } };
+  }
 };
 
 export const updateNotificationStatus = async (sellerId, notificationId, status = "read") => {
@@ -2875,15 +3016,19 @@ export const fetchReferralCheck = async (enteredCouponCode) => {
 };
 
 export const createRazorPayOrder = async (params) => {
-  const response = await axios.post(`${API_BASE_URL}/createRazorpayOrder`, params, {
+  const resolvedSellerId = getOrResolveSellerId(params?.sellerId);
+  const response = await axios.post(`${API_BASE_URL}/createRazorpayOrder`, { ...params, sellerId: resolvedSellerId }, {
     headers: { "Content-Type": "application/json" },
     timeout: 15000,
   });
   return response.data;
 };
 
+export const createRazorpayOrder = createRazorPayOrder;
+
 export const verifyRazorpayPayment = async (params) => {
-  const response = await axios.post(`${API_BASE_URL}/verifyRazorpayPayment`, params, {
+  const resolvedSellerId = getOrResolveSellerId(params?.sellerId);
+  const response = await axios.post(`${API_BASE_URL}/verifyRazorpayPayment`, { ...params, sellerId: resolvedSellerId }, {
     headers: { "Content-Type": "application/json" },
     timeout: 15000,
   });
@@ -2971,6 +3116,7 @@ export const getDashboardDrawerMenu = async () => {
 
 export const sellerService = {
   fetchInventoryData,
+  getSellerProductInventory,
   incrementInventory,
   decrementInventory,
   checkWalletBalance,
@@ -2983,14 +3129,20 @@ export const sellerService = {
   getCampaignSpends,
   createWalletOrder,
   verifyWalletPayment,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   getDashboardDrawerMenu,
   getUserProfile,
   getTickets,
+  getSellerTickets,
   createTicket,
   getAdvertisements,
   getAdvertisementSummary,
+  getCampaignSummary,
+  getSellerCampaigns,
+  getCampaignDetails,
   getAdvertisementPerformance,
   getAdvertisementAnalytics,
   createAdvertisement,
@@ -3082,7 +3234,6 @@ export const sellerService = {
   fetchShipmentData,
   fetchReferralCheck,
   createRazorPayOrder,
-  verifyRazorpayPayment,
   createSubscription,
   getVideoResponse,
   fetchSellerCampaignProduct,
@@ -3101,10 +3252,6 @@ export const advertisementService = {
   pauseCampaign,
   resumeCampaign,
   deleteCampaign
-};
-
-export const walletService = {
-  getWalletSummary
 };
 
 export const haatzupService = {

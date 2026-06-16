@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactDOM from "react-dom";
 import { sellerService } from "../../../services/sellerService";
-import { getSellerId } from "../../../utils/sellerSession";
+import { getSellerId, resolveSellerEmail } from "../../../utils/sellerSession";
 import "./Sidebar.css";
 
 const KEY_TO_ROUTE = {
@@ -331,18 +331,52 @@ function Sidebar({
 
   const sellerId = getSellerId();
 
+  const onCollapseChangeRef = useRef(onCollapseChange);
+  useEffect(() => {
+    onCollapseChangeRef.current = onCollapseChange;
+  });
+
+  const fetchingRef = useRef(false);
+  const walletFetchedRef = useRef(false);
+  const lastWalletBalanceRef = useRef(0);
+
+  useEffect(() => {
+    walletFetchedRef.current = false;
+    lastWalletBalanceRef.current = 0;
+  }, [sellerId]);
+
   useEffect(() => {
     if (!sellerId) return;
 
-    const fetchCounts = async () => {
+    let active = true;
+    const abortController = new AbortController();
+
+    const fetchCounts = async (forceWalletFetch = false) => {
+      if (fetchingRef.current) return;
+      fetchingRef.current = true;
       try {
+        const emailId = sellerEmail || resolveSellerEmail() || "";
+        const now = new Date();
+        const fromDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          .toISOString()
+          .split("T")[0];
+        const toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          .toISOString()
+          .split("T")[0];
+
+        const walletPromise = (!walletFetchedRef.current || forceWalletFetch)
+          ? sellerService.checkWalletBalance(sellerId)
+          : Promise.resolve({ status: "success", message: { RemainingBalance: lastWalletBalanceRef.current } });
+
         const [ordersRes, ticketsRes, notifRes, walletRes, campaignRes] = await Promise.allSettled([
           sellerService.getSellerNewOrders(sellerId),
-          sellerService.getTickets(sellerId),
+          sellerService.getSellerTickets({ sellerId, emailId, fromDate, toDate }),
           sellerService.getNotifications(sellerId),
-          sellerService.checkWalletBalance(sellerId),
+          walletPromise,
           sellerService.getAdvertisementSummary(sellerId)
         ]);
+
+        if (!active) return;
 
         let ordersCount = 0;
         if (ordersRes.status === "fulfilled") {
@@ -370,8 +404,13 @@ function Sidebar({
 
         let walletLabel = "";
         if (walletRes.status === "fulfilled") {
-          const bal = Number(walletRes.value?.message?.RemainingBalance || walletRes.value?.RemainingBalance || 0);
-          walletLabel = `₹${bal.toFixed(2)}`;
+          const val = walletRes.value;
+          if (val && val.status !== "error") {
+            const bal = Number(val.message?.RemainingBalance || val.RemainingBalance || 0);
+            lastWalletBalanceRef.current = bal;
+            walletFetchedRef.current = true;
+          }
+          walletLabel = `₹${lastWalletBalanceRef.current.toFixed(2)}`;
         }
 
         let activeCampaigns = 0;
@@ -407,14 +446,32 @@ function Sidebar({
         });
 
       } catch (err) {
-        console.warn("[Sidebar] Error updating dynamic counts:", err);
+        if (active) {
+          console.warn("[Sidebar] Error updating dynamic counts:", err);
+        }
+      } finally {
+        fetchingRef.current = false;
       }
     };
 
-    fetchCounts();
-    const interval = setInterval(fetchCounts, 30000);
-    return () => clearInterval(interval);
-  }, [sellerId]);
+    fetchCounts(true);
+    const interval = setInterval(() => {
+      fetchCounts(false);
+    }, 60000);
+
+    const handleWalletUpdate = () => {
+      fetchCounts(true);
+    };
+
+    window.addEventListener("walletUpdate", handleWalletUpdate);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener("walletUpdate", handleWalletUpdate);
+      abortController.abort();
+    };
+  }, [sellerId, sellerEmail]);
 
   const activeKey = (() => {
     const path = location.pathname;
@@ -498,6 +555,7 @@ function Sidebar({
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tooltip.visible, tooltip.activeKey, isCollapsed, isTouchDevice]);
 
   useEffect(() => {
@@ -520,8 +578,10 @@ function Sidebar({
   }, []);
 
   useEffect(() => {
-    if (typeof onCollapseChange === "function") onCollapseChange(isCollapsed);
-  }, [isCollapsed, onCollapseChange]);
+    if (typeof onCollapseChangeRef.current === "function") {
+      onCollapseChangeRef.current(isCollapsed);
+    }
+  }, [isCollapsed]);
 
   const handleToggle = useCallback(() => setIsCollapsed(prev => !prev), []);
   const handleItemClick = useCallback((key) => {
