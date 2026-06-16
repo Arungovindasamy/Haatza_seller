@@ -11,11 +11,17 @@ import {
 } from "../../services/sellerService";
 import "./WalletPage.css";
 
-// Utility to load Razorpay script dynamically
+// Utility to load Razorpay script dynamically and safely ensure it is loaded only once
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
     if (window.Razorpay) {
       resolve(true);
+      return;
+    }
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(true));
+      existingScript.addEventListener("error", () => resolve(false));
       return;
     }
     const script = document.createElement("script");
@@ -327,21 +333,62 @@ const WalletPage = () => {
 
     try {
       // 1. Create Razorpay order on backend
-      const orderRes = await walletService.createRazorpayOrder({
+      const requestPayload = {
         sellerId,
         amount: amountVal,
-      });
+      };
+      devLog("[WalletPage] Order creation request payload:", requestPayload);
 
-      devLog("[WalletPage] Order creation response:", orderRes);
+      const orderRes = await walletService.createRazorpayOrder(requestPayload);
+
+      // Sanitize response to prevent logging sensitive key secrets
+      const sanitizedOrderRes = { ...orderRes };
+      if (sanitizedOrderRes.message && typeof sanitizedOrderRes.message === "object") {
+        sanitizedOrderRes.message = { ...sanitizedOrderRes.message };
+        if (sanitizedOrderRes.message.keyId) sanitizedOrderRes.message.keyId = "***";
+        if (sanitizedOrderRes.message.key) sanitizedOrderRes.message.key = "***";
+      }
+      if (sanitizedOrderRes.key) sanitizedOrderRes.key = "***";
+      if (sanitizedOrderRes.razorpayKey) sanitizedOrderRes.razorpayKey = "***";
+
+      devLog("[WalletPage] Order creation response:", sanitizedOrderRes);
 
       // Extract details safely supporting various back-end structures
-      const rzpOrderId = orderRes?.orderId || orderRes?.id || orderRes?.razorpayOrderId || orderRes?.message?.id;
-      const rzpAmount = orderRes?.amount || orderRes?.amount_due || (amountVal * 100);
-      const rzpCurrency = orderRes?.currency || "INR";
-      const rzpKey = orderRes?.key || orderRes?.razorpayKey;
+      const rzpOrderId =
+        orderRes?.orderId ||
+        orderRes?.order_id ||
+        orderRes?.id ||
+        orderRes?.razorpayOrderId ||
+        orderRes?.data?.orderId ||
+        orderRes?.data?.order_id ||
+        orderRes?.data?.id ||
+        orderRes?.message?.order?.id ||
+        orderRes?.message?.order?.orderId ||
+        orderRes?.message?.order?.order_id ||
+        orderRes?.message?.orderId ||
+        orderRes?.message?.order_id ||
+        orderRes?.message?.id;
+
+      devLog("[WalletPage] Resolved orderId:", rzpOrderId);
+
+      const rzpAmount =
+        orderRes?.amount ||
+        orderRes?.amount_due ||
+        orderRes?.message?.order?.amount ||
+        orderRes?.message?.amount ||
+        (amountVal * 100);
+
+      const rzpCurrency = orderRes?.currency || orderRes?.message?.order?.currency || "INR";
+
+      const rzpKey =
+        orderRes?.key ||
+        orderRes?.razorpayKey ||
+        orderRes?.message?.keyId ||
+        orderRes?.message?.key ||
+        orderRes?.message?.razorpayKey;
 
       if (!rzpOrderId) {
-        throw new Error("Failed to create order on payment server (missing Order ID).");
+        throw new Error("Payment order creation failed. Please try again.");
       }
 
       // 2. Load Razorpay script
@@ -352,6 +399,13 @@ const WalletPage = () => {
 
       setRazorpayLoading(false);
 
+      // Check for image/logo in the response and ensure it's a valid HTTPS URL (no localhost/HTTP)
+      const rawImage = orderRes?.image || orderRes?.logo || orderRes?.message?.image || orderRes?.message?.logo || orderRes?.message?.order?.image || orderRes?.message?.order?.logo;
+      let rzpImage = undefined;
+      if (rawImage && typeof rawImage === "string" && rawImage.startsWith("https://") && !rawImage.includes("localhost") && !rawImage.includes("127.0.0.1")) {
+        rzpImage = rawImage;
+      }
+
       // 3. Configure Razorpay checkout options
       const options = {
         key: rzpKey || "rzp_test_mockkey",
@@ -360,6 +414,7 @@ const WalletPage = () => {
         name: "Haatza India Private Limited",
         description: "Add Funds to Wallet",
         order_id: rzpOrderId,
+        ...(rzpImage ? { image: rzpImage } : {}),
         prefill: {
           name: sellerProfile?.sellerName || "Seller",
           email: sellerProfile?.email || localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail") || "",
@@ -373,12 +428,13 @@ const WalletPage = () => {
           devLog("[WalletPage] Razorpay payment success handler:", paymentRes);
 
           try {
-            // Capture signature, payment ID, order ID
+            // Capture signature, payment ID, order ID, and amount
             const capturePayload = {
               sellerId,
               razorpay_payment_id: paymentRes.razorpay_payment_id,
               razorpay_order_id: paymentRes.razorpay_order_id || rzpOrderId,
               razorpay_signature: paymentRes.razorpay_signature,
+              amount: amountVal,
             };
 
             // 4. Verify payment on backend
@@ -401,12 +457,8 @@ const WalletPage = () => {
               setSuccessMessage("₹" + amountVal.toFixed(2) + " credited to your wallet.");
               setAddingFunds(false);
 
-              // Reload balance and transaction history or campaign spends depending on active tab
-              if (activeTab === "history") {
-                await Promise.all([loadBalance(), loadHistory()]);
-              } else {
-                await Promise.all([loadBalance(), loadCampaignSummary()]);
-              }
+              // Reload balance, transaction history, and campaign spends to sync all state
+              await Promise.all([loadBalance(), loadHistory(), loadCampaignSummary()]);
 
               window.dispatchEvent(new CustomEvent("walletUpdate"));
 
