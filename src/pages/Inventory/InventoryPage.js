@@ -1,6 +1,5 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import InventoryStats from "./components/InventoryStats";
 import InventoryFilters from "./components/InventoryFilters";
 import InventoryTable from "./components/InventoryTable";
 import { getSellerId } from "../../utils/sellerSession";
@@ -19,11 +18,10 @@ const InventoryPage = () => {
     handleSearchChange,
     statusFilter,
     setStatusFilter,
-    categoryFilter,
-    setCategoryFilter,
-    categories,
-    stats,
-    handleSaveQuantity,
+    inStockCount,
+    outOfStockCount,
+    handleIncrement,
+    handleDecrement,
     handleRefresh,
     page,
     setPage,
@@ -43,14 +41,6 @@ const InventoryPage = () => {
         <p>Manage product variants, stock levels, and availability.</p>
       </div>
 
-      {/* Dynamic Stats Cards */}
-      <InventoryStats
-        totalProducts={stats.totalProducts}
-        totalVariants={stats.totalVariants}
-        inStockVariants={stats.inStockVariants}
-        outOfStockVariants={stats.outOfStockVariants}
-      />
-
       {/* Error / Warning Alert Banner */}
       {error && (
         <div className="inv-alert-banner">
@@ -59,17 +49,12 @@ const InventoryPage = () => {
         </div>
       )}
 
-      {/* Filters */}
+      {/* Filters & Content Wrap */}
       <div className="inv-card">
         <div className="inv-card-body">
           <InventoryFilters
             search={searchRaw}
             onSearchChange={handleSearchChange}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            categoryFilter={categoryFilter}
-            onCategoryFilterChange={setCategoryFilter}
-            categories={categories}
             onRefresh={handleRefresh}
           />
 
@@ -78,23 +63,16 @@ const InventoryPage = () => {
             <button
               type="button"
               className={`inv-tab-btn ${statusFilter === "in_stock" ? "inv-tab-btn--active" : ""}`}
-              onClick={() => setStatusFilter("in_stock")}
+              onClick={() => setViewStateAndResetPage("in_stock")}
             >
-              In Stock ({stats.inStockVariants})
+              In Stock ({inStockCount})
             </button>
             <button
               type="button"
               className={`inv-tab-btn ${statusFilter === "out_of_stock" ? "inv-tab-btn--active" : ""}`}
-              onClick={() => setStatusFilter("out_of_stock")}
+              onClick={() => setViewStateAndResetPage("out_of_stock")}
             >
-              Out of Stock ({stats.outOfStockVariants})
-            </button>
-            <button
-              type="button"
-              className={`inv-tab-btn ${statusFilter === "all" ? "inv-tab-btn--active" : ""}`}
-              onClick={() => setStatusFilter("all")}
-            >
-              All Items ({stats.totalVariants})
+              Out of Stock ({outOfStockCount})
             </button>
           </div>
 
@@ -108,7 +86,8 @@ const InventoryPage = () => {
             <>
               <InventoryTable
                 items={filteredItems}
-                onSaveQuantity={handleSaveQuantity}
+                onIncrement={handleIncrement}
+                onDecrement={handleDecrement}
               />
               
               {/* Pagination Controls */}
@@ -146,6 +125,12 @@ const InventoryPage = () => {
       </div>
     </div>
   );
+
+  // Helper helper to switch status tab & reset to page 1
+  function setViewStateAndResetPage(status) {
+    setStatusFilter(status);
+    setPage(1);
+  }
 };
 
 export default InventoryPage;

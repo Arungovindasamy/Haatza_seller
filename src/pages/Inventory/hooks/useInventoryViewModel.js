@@ -3,75 +3,6 @@ import sellerService, { resolveWixImage } from "../../../services/sellerService"
 
 const LIMIT = 10;
 
-// Safe response normalization helper to handle any API response structure
-const normalizeInventoryResponse = (data) => {
-  if (!data) return { items: [], totalItems: 0 };
-
-  // If data is directly an array
-  if (Array.isArray(data)) {
-    return { items: data, totalItems: data.length };
-  }
-
-  // Look for totalItems in nested data
-  let totalItems = 0;
-  const totalFields = ["totalItems", "total", "count", "total_items"];
-  for (const field of totalFields) {
-    if (data[field] !== undefined) {
-      totalItems = Number(data[field]);
-      break;
-    }
-    if (data.data && data.data[field] !== undefined) {
-      totalItems = Number(data.data[field]);
-      break;
-    }
-    if (data.message && data.message[field] !== undefined) {
-      totalItems = Number(data.message[field]);
-      break;
-    }
-  }
-
-  // Try to find the items list in typical field names
-  const arrayFields = [
-    "inventoryItems",
-    "inventory",
-    "items",
-    "products",
-    "data",
-    "result",
-    "results"
-  ];
-
-  // Check top-level fields
-  for (const field of arrayFields) {
-    if (Array.isArray(data[field])) {
-      return { items: data[field], totalItems: totalItems || data[field].length };
-    }
-  }
-
-  // Check nested in data/message/body
-  const nestedObjects = ["data", "message", "body"];
-  for (const nest of nestedObjects) {
-    if (data[nest] && typeof data[nest] === "object") {
-      if (Array.isArray(data[nest])) {
-        return { items: data[nest], totalItems: totalItems || data[nest].length };
-      }
-      for (const field of arrayFields) {
-        if (Array.isArray(data[nest][field])) {
-          return { items: data[nest][field], totalItems: totalItems || data[nest][field].length };
-        }
-      }
-    }
-  }
-
-  // If no array found but data itself has nested properties, look for any array values
-  const anyArray = Object.values(data).find(Array.isArray);
-  if (anyArray) {
-    return { items: anyArray, totalItems: totalItems || anyArray.length };
-  }
-
-  return { items: [], totalItems: 0 };
-};
-
 export const useInventoryViewModel = (sellerId) => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +16,6 @@ export const useInventoryViewModel = (sellerId) => {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [statusFilter, setStatusFilter] = useState("in_stock"); // default to In Stock tab
-  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const debounceRef = useRef(null);
 
@@ -103,86 +33,72 @@ export const useInventoryViewModel = (sellerId) => {
   const loadInventory = useCallback(async (signal = null) => {
     setLoading(true);
     setError(null);
+    const url = `https://haatza.com/_functions/sellerproductInventory?sellerId=${sellerId}&page=${page}&searchText=${search}`;
+    console.log("[InventoryPage] Fetch Inventory URL:", url);
     try {
-      const data = await sellerService.getSellerProductInventory({ 
+      const response = await sellerService.getSellerProductInventory({ 
         sellerId, 
         page, 
         searchText: search, 
         signal 
       });
       
-      const { items: rawItems, totalItems: itemsCount } = normalizeInventoryResponse(data);
+      console.log("[InventoryPage] Raw Inventory Response:", response);
 
-      setTotalItems(itemsCount);
+      const items =
+        response?.data?.inventoryItems ||
+        response?.inventoryItems ||
+        response?.data?.message?.inventoryItems ||
+        response?.message?.inventoryItems ||
+        [];
+
+      const totalItemsVal =
+        response?.data?.totalItems ||
+        response?.totalItems ||
+        response?.data?.message?.totalItems ||
+        response?.message?.totalItems ||
+        items.length;
+
+      console.log("[InventoryPage] Inventory Items:", items);
+      console.log("[InventoryPage] Total Items:", totalItemsVal);
+
+      setTotalItems(totalItemsVal);
 
       // Map backend fields safely to frontend schema
       const mappedItems = [];
-      rawItems.forEach((product, prodIndex) => {
-        if (!product || typeof product !== "object") return;
-        const pId = product.productId || product.externalId || product.id || product._id || "";
-        const pName = product.productName || product.name || "Unnamed Product";
+      items.forEach((item, index) => {
+        if (!item || typeof item !== "object") return;
         
-        const media = product.mainMedia || product.mainmedia || product.mainImage || product.image || "";
+        const pId = item.productId || item.externalId || item.id || item.productId || "";
+        const pName = item.productName || item.name || item.title || "Unnamed Product";
+        
+        const media = item.image || item.productImage || item.imageUrl || (Array.isArray(item.media) ? item.media[0] : item.media) || "";
         const pImg = resolveWixImage(media) || media || "";
-        
-        const pCat = product.category || product.categoryName || "General";
-        const variants = Array.isArray(product.variants) ? product.variants : [];
 
-        if (variants.length === 0) {
-          const id = product.id || product._id || product.variantId || `inv-${prodIndex}-${Date.now()}`;
-          const variantName = product.variant || product.variantName || product.size || product.choices?.Size || "Standard";
-          const sku = product.sku || `SKU-${id}`;
-          const stock = Number(
-            product.quantity !== undefined
-              ? product.quantity
-              : (product.stock?.quantity !== undefined
-                  ? product.stock.quantity
-                  : (product.stock !== undefined ? product.stock : (product.inventoryQuantity !== undefined ? product.inventoryQuantity : 0)))
-          );
-          mappedItems.push({
-            id,
-            productId: pId,
-            name: pName,
-            variant: variantName,
-            sku,
-            stock,
-            category: pCat,
-            image: pImg,
-          });
-        } else {
-          variants.forEach((v, vIndex) => {
-            if (!v || typeof v !== "object") return;
-            const id = v.variantId || v.id || v._id || `var-${prodIndex}-${vIndex}-${Date.now()}`;
-            const variantName =
-              v.choices?.Size ||
-              v.choices?.size ||
-              v.variant ||
-              v.size ||
-              v.variantName ||
-              (v.choices ? Object.values(v.choices).join(" / ") : "") ||
-              "Standard";
-            
-            const sku = v.sku || product.sku || `SKU-${id}`;
-            const stock = Number(
-              v.quantity !== undefined
-                ? v.quantity
-                : (v.stock?.quantity !== undefined
-                    ? v.stock.quantity
-                    : (v.stock !== undefined ? v.stock : (v.inventoryQuantity !== undefined ? v.inventoryQuantity : 0)))
-            );
-            
-            mappedItems.push({
-              id,
-              productId: pId,
-              name: pName,
-              variant: variantName,
-              sku,
-              stock,
-              category: pCat,
-              image: pImg,
-            });
-          });
-        }
+        const variantName = item.variant || item.size || item.variantName || item.options?.size || "Standard";
+        const sku = item.sku || "";
+        
+        const stock = Number(
+          item.stock !== undefined
+            ? item.stock
+            : (item.quantity !== undefined
+                ? item.quantity
+                : (item.currentStock !== undefined
+                    ? item.currentStock
+                    : (item.inventory !== undefined ? item.inventory : 0)))
+        );
+
+        const id = item.id || item.variantId || item.variant_id || item._id || `inv-${index}-${Date.now()}`;
+
+        mappedItems.push({
+          id,
+          productId: pId,
+          name: pName,
+          variant: variantName,
+          sku,
+          stock,
+          image: pImg,
+        });
       });
 
       setInventory(mappedItems);
@@ -217,51 +133,53 @@ export const useInventoryViewModel = (sellerId) => {
     };
   }, []);
 
-  // Calculate unique categories dynamically
-  const categories = useMemo(() => {
-    return Array.from(new Set(inventory.map((item) => item.category).filter(Boolean)));
-  }, [inventory]);
+  // Calculate stats dynamically based on the current dataset
+  const inStockCount = useMemo(() => inventory.filter((item) => item.stock > 0).length, [inventory]);
+  const outOfStockCount = useMemo(() => inventory.filter((item) => item.stock === 0).length, [inventory]);
 
-  // Calculate stats dynamically based on the current dataset and server totalItems
-  const stats = useMemo(() => {
-    const uniqueProducts = new Set(inventory.map((item) => item.name));
-    const totalProducts = Math.max(uniqueProducts.size, totalItems);
-    const totalVariants = inventory.length;
-    const inStockVariants = inventory.filter((item) => item.stock > 0).length;
-    const outOfStockVariants = inventory.filter((item) => item.stock === 0).length;
-
-    return {
-      totalProducts,
-      totalVariants,
-      inStockVariants,
-      outOfStockVariants,
-    };
-  }, [inventory, totalItems]);
-
-  // Handle quantity save action for a row
-  const handleSaveQuantity = async (id, newQty) => {
+  // Handle immediate increment
+  const handleIncrement = async (id) => {
     const item = inventory.find((x) => x.id === id);
     if (!item) return;
 
+    // Optimistically increment stock locally
+    setInventory((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, stock: x.stock + 1 } : x))
+    );
+
     try {
       setError(null);
-      const delta = newQty - item.stock;
-      if (delta === 0) return;
-
-      const absQty = Math.abs(delta);
-      if (delta > 0) {
-        await sellerService.incrementInventory(sellerId, item.productId, item.id, absQty);
-      } else {
-        await sellerService.decrementInventory(sellerId, item.productId, item.id, absQty);
-      }
-
-      setInventory((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, stock: newQty } : x))
-      );
+      await sellerService.incrementInventory(sellerId, item.productId, item.id, 1);
     } catch (err) {
-      console.error("[useInventoryViewModel] Save failed:", err);
-      setError(err.message || "Failed to update inventory quantity on the server.");
-      throw err; // bubble up if needed
+      console.error("[useInventoryViewModel] Increment failed:", err);
+      setError(err.message || "Failed to increment stock.");
+      // Rollback on failure
+      setInventory((prev) =>
+        prev.map((x) => (x.id === id ? { ...x, stock: Math.max(0, x.stock - 1) } : x))
+      );
+    }
+  };
+
+  // Handle immediate decrement
+  const handleDecrement = async (id) => {
+    const item = inventory.find((x) => x.id === id);
+    if (!item || item.stock <= 0) return;
+
+    // Optimistically decrement stock locally
+    setInventory((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, stock: Math.max(0, x.stock - 1) } : x))
+    );
+
+    try {
+      setError(null);
+      await sellerService.decrementInventory(sellerId, item.productId, item.id, 1);
+    } catch (err) {
+      console.error("[useInventoryViewModel] Decrement failed:", err);
+      setError(err.message || "Failed to decrement stock.");
+      // Rollback on failure
+      setInventory((prev) =>
+        prev.map((x) => (x.id === id ? { ...x, stock: x.stock + 1 } : x))
+      );
     }
   };
 
@@ -270,7 +188,6 @@ export const useInventoryViewModel = (sellerId) => {
     setSearchRaw("");
     setSearch("");
     setStatusFilter("in_stock");
-    setCategoryFilter("all");
     setPage(1);
     loadInventory();
   }, [loadInventory]);
@@ -286,13 +203,18 @@ export const useInventoryViewModel = (sellerId) => {
         matchesStatus = item.stock === 0;
       }
 
-      // 2. Category filter
-      const matchesCategory =
-        categoryFilter === "all" || item.category === categoryFilter;
+      // 2. Local search filter (product name, variant/size)
+      const query = (searchRaw || "").toLowerCase().trim();
+      let matchesSearch = true;
+      if (query) {
+        matchesSearch =
+          (item.name || "").toLowerCase().includes(query) ||
+          (item.variant || "").toLowerCase().includes(query);
+      }
 
-      return matchesStatus && matchesCategory;
+      return matchesStatus && matchesSearch;
     });
-  }, [inventory, statusFilter, categoryFilter]);
+  }, [inventory, statusFilter, searchRaw]);
 
   const totalPages = Math.ceil(totalItems / LIMIT);
 
@@ -306,11 +228,10 @@ export const useInventoryViewModel = (sellerId) => {
     handleSearchChange,
     statusFilter,
     setStatusFilter,
-    categoryFilter,
-    setCategoryFilter,
-    categories,
-    stats,
-    handleSaveQuantity,
+    inStockCount,
+    outOfStockCount,
+    handleIncrement,
+    handleDecrement,
     handleRefresh,
     page,
     setPage,

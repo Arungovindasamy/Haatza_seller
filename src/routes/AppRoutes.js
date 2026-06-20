@@ -22,6 +22,8 @@ const AdvertisementPage = lazy(() => import("../pages/Advertisement/Advertisemen
 const CreateCampaignPage = lazy(() => import("../pages/Advertisement/CreateCampaignPage"));
 const HaatzUpPage = lazy(() => import("../pages/HaatzUp/HaatzUpPage"));
 const UploadReelPage = lazy(() => import("../pages/HaatzUp/UploadReelPage"));
+const GrowPlanPage = lazy(() => import("../pages/GrowPlan/GrowPlanPage"));
+
 
 // Listings page flow
 const AddListing = lazy(() => import("../pages/AddProduct/AddListing/AddListing"));
@@ -98,7 +100,7 @@ function AppRoutes() {
           <Route path="/advertisement/create-campaign" element={<CreateCampaignPage />} />
           <Route path="/haatzup" element={<HaatzUpPage />} />
           <Route path="/haatzup/upload-reel" element={<UploadReelPage />} />
-          <Route path="/growplan" element={<PlaceholderPage title="Grow Plan" />} />
+          <Route path="/growplan" element={<GrowPlanPage />} />
           <Route path="/productinsight" element={<PlaceholderPage title="Product Insight" />} />
           <Route path="/warehouse" element={<PlaceholderPage title="Warehouse" />} />
           <Route path="/influencer" element={<PlaceholderPage title="Influencer Branding" />} />
