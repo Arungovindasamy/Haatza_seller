@@ -30,6 +30,12 @@ const InventoryPage = () => {
     limit,
   } = useInventoryViewModel(sellerId);
 
+  // Helper helper to switch status tab & reset to page 1
+  const setViewStateAndResetPage = (status) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
+
   // Calculate items range shown
   const fromItem = totalItems === 0 ? 0 : (page - 1) * limit + 1;
   const toItem = Math.min(page * limit, totalItems);
@@ -125,12 +131,6 @@ const InventoryPage = () => {
       </div>
     </div>
   );
-
-  // Helper helper to switch status tab & reset to page 1
-  function setViewStateAndResetPage(status) {
-    setStatusFilter(status);
-    setPage(1);
-  }
 };
 
 export default InventoryPage;

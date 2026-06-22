@@ -34,7 +34,8 @@ export const useInventoryViewModel = (sellerId) => {
     setLoading(true);
     setError(null);
     const url = `https://haatza.com/_functions/sellerproductInventory?sellerId=${sellerId}&page=${page}&searchText=${search}`;
-    console.log("[InventoryPage] Fetch Inventory URL:", url);
+    console.log("[Inventory] sellerId", sellerId);
+    console.log("[Inventory] Fetch URL", url);
     try {
       const response = await sellerService.getSellerProductInventory({ 
         sellerId, 
@@ -43,24 +44,13 @@ export const useInventoryViewModel = (sellerId) => {
         signal 
       });
       
-      console.log("[InventoryPage] Raw Inventory Response:", response);
+      console.log("[Inventory] Raw Response", response);
 
-      const items =
-        response?.data?.inventoryItems ||
-        response?.inventoryItems ||
-        response?.data?.message?.inventoryItems ||
-        response?.message?.inventoryItems ||
-        [];
+      const items = response?.inventoryItems || [];
+      const totalItemsVal = response?.totalItems ?? 0;
 
-      const totalItemsVal =
-        response?.data?.totalItems ||
-        response?.totalItems ||
-        response?.data?.message?.totalItems ||
-        response?.message?.totalItems ||
-        items.length;
-
-      console.log("[InventoryPage] Inventory Items:", items);
-      console.log("[InventoryPage] Total Items:", totalItemsVal);
+      console.log("[Inventory] inventoryItems count", items.length);
+      console.log("[Inventory] totalItems", totalItemsVal);
 
       setTotalItems(totalItemsVal);
 
@@ -106,7 +96,7 @@ export const useInventoryViewModel = (sellerId) => {
       if (err.name === "CanceledError" || err.name === "AbortError" || err.message === "canceled") {
         return; // Request was aborted, ignore error setting
       }
-      console.warn("[Inventory API Failed]", err.response?.status, err.response?.data || err.message);
+      console.error("[Inventory] Error", err);
       setError("Unable to load inventory. Please try again.");
       setInventory([]);
       setTotalItems(0);
@@ -125,6 +115,11 @@ export const useInventoryViewModel = (sellerId) => {
       controller.abort();
     };
   }, [loadInventory]);
+
+  // Reset page to 1 on status tab change
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   // Clean up debounce on unmount
   useEffect(() => {

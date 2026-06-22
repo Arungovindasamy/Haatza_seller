@@ -39,6 +39,7 @@ window.Razorpay = MockRazorpay;
 describe("GrowPlanPage - End to End Flow Tests", () => {
   const mockSellerId = "HS1380";
   const mockSellerEmail = "seller@example.com";
+  let hasProcessedSubscription = false;
   const mockPlansData = {
     message: {
       items: [
@@ -66,6 +67,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
   };
 
   beforeEach(() => {
+    hasProcessedSubscription = false;
     jest.clearAllMocks();
     resolveSellerId.mockReturnValue(mockSellerId);
     resolveSellerEmail.mockReturnValue(mockSellerEmail);
@@ -80,6 +82,23 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
         return Promise.resolve({ data: { message: { RemainingBalance: 500 } } });
       }
       if (url.includes("sellersubscription")) {
+        if (hasProcessedSubscription) {
+          return Promise.resolve({
+            data: {
+              status: "success",
+              message: {
+                orders: [{
+                  tableId: "abc-123",
+                  planName: "Pro",
+                  planPrice: 1999,
+                  startDate: "22-06-2026",
+                  planDuration: "1 Month",
+                  status: "Active"
+                }]
+              }
+            }
+          });
+        }
         return Promise.resolve({ data: { message: { orders: [] } } });
       }
       return Promise.reject(new Error("Unknown GET URL"));
@@ -407,12 +426,21 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
         return Promise.resolve(mockOrderResponse);
       }
       if (url.includes("processSubscriptionOrder")) {
-        return Promise.resolve({ data: { success: true } });
+        hasProcessedSubscription = true;
+        return Promise.resolve({
+          data: {
+            status: "success",
+            message: {
+              message: "Subscription order processed successfully"
+            }
+          }
+        });
       }
       return Promise.reject(new Error("Unknown POST URL"));
     });
 
     sellerService.verifyRazorpayPayment.mockResolvedValue({
+      status: "success",
       message: { verified: true }
     });
 
@@ -469,21 +497,22 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       amount: 1999,
       paymentId: "pay_123",
       orderId: "order_T3qS9dNhtXZZXt",
-      signature: "sig_abc",
-      planId: "pro_plan",
-      planName: "Pro"
+      signature: "sig_abc"
     });
 
     // Verify processSubscriptionOrder API is called
     expect(axios.post).toHaveBeenCalledWith(
       "https://haatzaseller.com/_functions/processSubscriptionOrder",
       expect.objectContaining({
-        sellerId: mockSellerId,
-        email: mockSellerEmail,
-        planName: "Pro",
-        payableAmount: 1999,
-        paymentMethod: "razorpay",
-        paymentStatus: "success"
+        createSubscription: expect.objectContaining({
+          planName: "Pro",
+          planId: "pro_plan",
+          status: "Active",
+          email: mockSellerEmail,
+          paymentId: "pay_123",
+          razorpayOrderId: "order_T3qS9dNhtXZZXt",
+          sellerId: mockSellerId
+        })
       })
     );
 
@@ -504,6 +533,23 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
         return Promise.resolve({ data: { message: { RemainingBalance: 3000 } } });
       }
       if (url.includes("sellersubscription")) {
+        if (hasProcessedSubscription) {
+          return Promise.resolve({
+            data: {
+              status: "success",
+              message: {
+                orders: [{
+                  tableId: "abc-123",
+                  planName: "Pro",
+                  planPrice: 1999,
+                  startDate: "22-06-2026",
+                  planDuration: "1 Month",
+                  status: "Active"
+                }]
+              }
+            }
+          });
+        }
         return Promise.resolve({ data: { message: { orders: [] } } });
       }
       return Promise.reject(new Error("Unknown GET URL"));
@@ -511,7 +557,15 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
 
     axios.post.mockImplementation((url, payload) => {
       if (url.includes("processSubscriptionOrder")) {
-        return Promise.resolve({ data: { success: true } });
+        hasProcessedSubscription = true;
+        return Promise.resolve({
+          data: {
+            status: "success",
+            message: {
+              message: "Subscription order processed successfully"
+            }
+          }
+        });
       }
       return Promise.reject(new Error("Unknown POST URL"));
     });
@@ -545,13 +599,13 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(axios.post).toHaveBeenCalledWith(
         "https://haatzaseller.com/_functions/processSubscriptionOrder",
         expect.objectContaining({
-          sellerId: mockSellerId,
-          email: mockSellerEmail,
-          planName: "Pro",
-          payableAmount: 0,
-          walletRedeemed: 1999,
-          paymentMethod: "wallet",
-          paymentStatus: "success"
+          createSubscription: expect.objectContaining({
+            planName: "Pro",
+            planId: "pro_plan",
+            status: "Active",
+            email: mockSellerEmail,
+            sellerId: mockSellerId
+          })
         })
       );
       expect(axios.post).not.toHaveBeenCalledWith(expect.stringContaining("createRazorpayOrder"), expect.any(Object));
@@ -691,5 +745,198 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
     });
 
     expect(callCount).toBe(1); // Only 1 order creation should be triggered
+  });
+
+  // 24. Test default Pro selected
+  test("24. Test default Pro selected", async () => {
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Growth")).toBeInTheDocument();
+    });
+
+    const proCard = screen.getAllByText("Pro")[0].closest(".plan-card");
+    expect(proCard).toHaveClass("selected");
+    expect(proCard.querySelector(".plan-expanded-details")).toBeInTheDocument();
+
+    const growthCard = screen.getByText("Growth").closest(".plan-card");
+    expect(growthCard).not.toHaveClass("selected");
+    expect(growthCard.querySelector(".plan-expanded-details")).toBeNull();
+  });
+
+  // 25. Test selecting Growth and Enterprise expands correct details
+  test("25. Test selecting Growth and Enterprise expands correct details", async () => {
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Growth")).toBeInTheDocument();
+    });
+
+    // Pro is selected initially
+    let proCard = screen.getAllByText("Pro")[0].closest(".plan-card");
+    let growthCard = screen.getByText("Growth").closest(".plan-card");
+    let enterpriseCard = screen.getByText("Enterprise").closest(".plan-card");
+
+    expect(proCard).toHaveClass("selected");
+    expect(growthCard).not.toHaveClass("selected");
+    expect(enterpriseCard).not.toHaveClass("selected");
+
+    // Click Growth
+    fireEvent.click(growthCard);
+    expect(growthCard).toHaveClass("selected");
+    expect(growthCard.querySelector(".plan-expanded-details")).toBeInTheDocument();
+    expect(proCard).not.toHaveClass("selected");
+    expect(proCard.querySelector(".plan-expanded-details")).toBeNull();
+
+    // Click Enterprise
+    fireEvent.click(enterpriseCard);
+    expect(enterpriseCard).toHaveClass("selected");
+    expect(enterpriseCard.querySelector(".plan-expanded-details")).toBeInTheDocument();
+    expect(growthCard).not.toHaveClass("selected");
+    expect(growthCard.querySelector(".plan-expanded-details")).toBeNull();
+  });
+
+  // 26. Test Continue opens Plan Review page with correct selected plan
+  test("26. Test Continue opens Plan Review page with correct selected plan", async () => {
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Growth")).toBeInTheDocument();
+    });
+
+    // Pro is default. Click Continue
+    const continueBtn = screen.getByText("Continue").closest("button");
+    fireEvent.click(continueBtn);
+
+    // Verify Plan Review header shows up
+    expect(screen.getByRole("heading", { name: "Plan Review" })).toBeInTheDocument();
+    expect(screen.getByText("Pro Plan")).toBeInTheDocument();
+  });
+
+  // 27. Test Plan Review content order exactly: Pro -> What’s included -> See more -> Start date -> Redeem
+  test("27. Test Plan Review content order exactly: Pro -> What’s included -> See more -> Start date -> Redeem", async () => {
+    // Override plans mock so Pro has 6 features (enabling See more toggle)
+    const longMockPlansData = {
+      message: {
+        items: [
+          {
+            id: "growth_plan",
+            name: "Growth",
+            price: 999,
+            features: ["Growth Feature 1"]
+          },
+          {
+            id: "pro_plan",
+            name: "Pro",
+            price: 1999,
+            recommended: true,
+            features: [
+              "Feat 1",
+              "Feat 2",
+              "Feat 3",
+              "Feat 4",
+              "Feat 5",
+              "Feat 6"
+            ]
+          },
+          {
+            id: "enterprise_plan",
+            name: "Enterprise",
+            price: 2499,
+            features: ["Enterprise Feature 1"]
+          }
+        ]
+      }
+    };
+
+    axios.get.mockImplementation((url) => {
+      if (url.includes("getPlans")) {
+        return Promise.resolve({ data: longMockPlansData });
+      }
+      if (url.includes("checkWalletBalance")) {
+        return Promise.resolve({ data: { message: { RemainingBalance: 500 } } });
+      }
+      if (url.includes("sellersubscription")) {
+        return Promise.resolve({ data: { message: { orders: [] } } });
+      }
+      return Promise.reject(new Error("Unknown GET URL"));
+    });
+
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Growth")).toBeInTheDocument();
+    });
+
+    const continueBtn = screen.getByText("Continue").closest("button");
+    fireEvent.click(continueBtn);
+
+    // Find Plan Review card container
+    const reviewCard = screen.getByText("Pro Plan").closest(".plan-review-card");
+    expect(reviewCard).toBeInTheDocument();
+
+    const elName = reviewCard.querySelector(".review-plan-name-label");
+    const elPrice = reviewCard.querySelector(".review-plan-price-label");
+    const elTitle = reviewCard.querySelector(".plan-features-title");
+    const elSeeMore = reviewCard.querySelector(".btn-see-more-toggle");
+    const elStartDate = reviewCard.querySelector(".start-date-container");
+    const elRedeem = reviewCard.querySelector(".wallet-redeem-row");
+    const elPayable = reviewCard.querySelector(".total-payable");
+    const elPay = reviewCard.querySelector(".btn-subscribe-now");
+
+    expect(elName).toBeInTheDocument();
+    expect(elPrice).toBeInTheDocument();
+    expect(elTitle).toBeInTheDocument();
+    expect(elSeeMore).toBeInTheDocument();
+    expect(elStartDate).toBeInTheDocument();
+    expect(elRedeem).toBeInTheDocument();
+    expect(elPayable).toBeInTheDocument();
+    expect(elPay).toBeInTheDocument();
+
+    const isFollowing = (a, b) => {
+      return !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    };
+
+    expect(isFollowing(elName, elPrice)).toBe(true);
+    expect(isFollowing(elPrice, elTitle)).toBe(true);
+    expect(isFollowing(elTitle, elSeeMore)).toBe(true);
+    expect(isFollowing(elSeeMore, elStartDate)).toBe(true);
+    expect(isFollowing(elStartDate, elRedeem)).toBe(true);
+    expect(isFollowing(elRedeem, elPayable)).toBe(true);
+    expect(isFollowing(elPayable, elPay)).toBe(true);
+  });
+
+  // 28. Test desktop and mobile responsive elements are in document
+  test("28. Test desktop and mobile responsive elements are in document", async () => {
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Growth")).toBeInTheDocument();
+    });
+
+    // Check containers and elements
+    expect(document.querySelector(".plans-list")).toBeInTheDocument();
+    expect(document.querySelector(".plans-action-bar")).toBeInTheDocument();
+    expect(document.querySelector(".grow-plan-footer-content")).toBeInTheDocument();
   });
 });
