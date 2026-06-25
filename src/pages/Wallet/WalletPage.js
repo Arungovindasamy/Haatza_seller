@@ -582,7 +582,7 @@ const WalletPage = () => {
             const isVerified =
               verifyRes === true ||
               (verifyRes?.status === "success" &&
-               verifyRes?.message?.verified === true);
+                verifyRes?.message?.verified === true);
 
             if (!isVerified) {
               throw new Error("Payment verification failed. Wallet was not credited.");

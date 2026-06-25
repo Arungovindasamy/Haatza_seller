@@ -12,7 +12,7 @@ const FALLBACK_PLANS = [
   {
     id: "growth_plan",
     name: "Growth",
-    price: 999,
+    price: 1,
     features: [
       "Seller Verified Badge",
       "Featured placement in category + search (5 SKUs)",
@@ -110,6 +110,81 @@ const getTodayFormatted = () => {
   return `${day}-${month}-${year}`;
 };
 
+const normalize = (value) =>
+  String(value || "").trim().toLowerCase();
+
+const parseDateSafe = (dateVal) => {
+  if (!dateVal) return null;
+  if (dateVal instanceof Date) return dateVal;
+  
+  let d = new Date(dateVal);
+  if (!isNaN(d.getTime())) return d;
+  
+  if (typeof dateVal === 'string') {
+    const parts = dateVal.split('-');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        const fullYear = year < 100 ? 2000 + year : year;
+        d = new Date(fullYear, month, day);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+  }
+  return null;
+};
+
+const formatPlanDate = (dateValue) => {
+  if (!dateValue) return "";
+  const date = parseDateSafe(dateValue);
+  if (!date) return "";
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "2-digit",
+  }).replace(/ /g, " ");
+};
+
+const getLatestSubscription = (orders) => {
+  if (!Array.isArray(orders) || orders.length === 0) return null;
+  
+  const parseDate = (val) => {
+    if (!val) return 0;
+    const dateObj = parseDateSafe(val);
+    return dateObj ? dateObj.getTime() : 0;
+  };
+  
+  const getSubTimestamp = (sub) => {
+    const created = sub.createdDate || sub.createdAt || sub._createdDate || sub._createdAt;
+    if (created) {
+      const ts = parseDate(created);
+      if (ts > 0) return ts;
+    }
+    const payment = sub.paymentDate || sub.paidAt || sub.paymentAt || sub.transactionDate;
+    if (payment) {
+      const ts = parseDate(payment);
+      if (ts > 0) return ts;
+    }
+    const start = sub.startDate || sub.startedDate || sub.startAt;
+    if (start) {
+      const ts = parseDate(start);
+      if (ts > 0) return ts;
+    }
+    const end = sub.endDate || sub.endedDate || sub.expiryDate || sub.expiredOn || sub.validTill;
+    if (end) {
+      const ts = parseDate(end);
+      if (ts > 0) return ts;
+    }
+    return 0;
+  };
+
+  const sorted = [...orders].sort((a, b) => getSubTimestamp(b) - getSubTimestamp(a));
+  return sorted[0];
+};
+
+
 const GrowPlanPage = () => {
   const navigate = useNavigate();
   const sellerId = resolveSellerId();
@@ -120,28 +195,30 @@ const GrowPlanPage = () => {
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isFeaturesExpanded, setIsFeaturesExpanded] = useState(false);
-  
+
   // Wallet & Discount states
   const [walletBalance, setWalletBalance] = useState(0);
   const [redeemWallet, setRedeemWallet] = useState(false);
   const [referralCode, setReferralCode] = useState("");
   const [appliedReferralCode, setAppliedReferralCode] = useState("");
   const [referralDiscount, setReferralDiscount] = useState(0);
-  
+
   // Loaders / Feedback states
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [checkingReferral, setCheckingReferral] = useState(false);
   const [referralMessage, setReferralMessage] = useState({ text: "", type: "" });
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
-  
+
   // Active/Existing Subscription status
   const [activeSubscription, setActiveSubscription] = useState(null);
-  
+  const [plansRes, setPlansRes] = useState(null);
+  const [subscriptionRes, setSubscriptionRes] = useState(null);
+
   // Modals state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [sellerProfile, setSellerProfile] = useState(null);
-  
+
   // Dedupe payment handles
   const paymentInProgressRef = useRef(false);
   const processedPaymentRef = useRef(new Set());
@@ -202,6 +279,7 @@ const GrowPlanPage = () => {
       let planItems = [];
       try {
         const plansRes = await axios.get("https://haatzaseller.com/_functions/getPlans");
+        setPlansRes(plansRes);
         console.log("[GrowPlanPage] Get Plans Response", plansRes.data);
         planItems = plansRes.data?.message?.items || [];
       } catch (err) {
@@ -238,11 +316,11 @@ const GrowPlanPage = () => {
           const subRes = await axios.get("https://haatzaseller.com/_functions/sellersubscription", {
             params: { email: sellerEmail }
           });
+          setSubscriptionRes(subRes);
           console.log("[GrowPlanPage] Seller Subscription Response", subRes.data);
           const orders = subRes.data?.message?.orders || [];
           if (orders.length > 0) {
-            // Take the latest subscription order
-            setActiveSubscription(orders[0]);
+            setActiveSubscription(getLatestSubscription(orders));
           }
         } catch (err) {
           console.error("[GrowPlanPage] Seller Subscription API error:", err);
@@ -273,16 +351,66 @@ const GrowPlanPage = () => {
     initPageData();
   }, [initPageData]);
 
+  const currentSubscription = activeSubscription;
+
+  const currentPlanName = currentSubscription?.planName || currentSubscription?.plan || currentSubscription?.subscriptionPlan;
+  const expiryDate =
+    currentSubscription?.endDate ||
+    currentSubscription?.endedDate ||
+    currentSubscription?.expiryDate ||
+    currentSubscription?.expiredOn ||
+    currentSubscription?.validTill;
+
+  const expiryDateObj = parseDateSafe(expiryDate);
+  const isExpired = expiryDateObj ? expiryDateObj < new Date() : false;
+
+  const isSamePlan = (plan) =>
+    plan && normalize(plan.name || plan.planName) === normalize(currentPlanName);
+
+  const getBottomActionText = () => {
+    if (!selectedPlan) return "Select Plan";
+
+    if (currentPlanName && isSamePlan(selectedPlan)) {
+      if (isExpired) {
+        return "Renew Plan";
+      }
+      return "Current Plan";
+    }
+
+    if (currentPlanName && !isSamePlan(selectedPlan)) {
+      return "Upgrade Plan";
+    }
+
+    return "Select Plan";
+  };
+
+  const isBottomButtonDisabled =
+    !selectedPlan ||
+    (!isExpired && currentPlanName && isSamePlan(selectedPlan));
+
+  const handlePlanAction = () => {
+    if (!selectedPlan) return;
+    setViewState("review");
+  };
+
+  // Development logs
+  console.log("[GrowPlan] Plans Response", plansRes);
+  console.log("[GrowPlan] Seller Subscription Response", subscriptionRes);
+  console.log("[GrowPlan] Current Subscription", currentSubscription);
+  console.log("[GrowPlan] Current Plan Name", currentPlanName);
+  console.log("[GrowPlan] Expiry Date", expiryDate);
+  console.log("[GrowPlan] Is Expired", isExpired);
+
   // Calculations for Plan Review page
   const planPrice = selectedPlan ? Number(selectedPlan.price || 0) : 0;
-  
+
   // Wallet discount calculations
   const maxWalletRedeem = Math.min(walletBalance, planPrice);
   const walletRedeemedAmount = redeemWallet ? maxWalletRedeem : 0;
-  
+
   // Total Price is the plan price
   const totalPrice = planPrice;
-  
+
   // Payable amount = planPrice - wallet - referralDiscount
   const rawPayableAmount = planPrice - walletRedeemedAmount - referralDiscount;
   const payableAmount = Math.max(0, rawPayableAmount);
@@ -403,7 +531,7 @@ const GrowPlanPage = () => {
         // Map Razorpay Order properties exactly:
         const messageData = orderRes.data?.message;
         const orderData = messageData?.order;
-        
+
         const razorpayOrderId = orderData?.id;
         const orderAmount = orderData?.amount;
         const razorpayKey = messageData?.keyId;
@@ -465,9 +593,7 @@ const GrowPlanPage = () => {
 
               console.log("[GrowPlan] Verify Response", verifyRes);
 
-              const verified =
-                verifyRes?.status === "success" &&
-                verifyRes?.message?.verified === true;
+              const verified = verifyRes?.message?.verified === true;
 
               if (!verified) {
                 console.error("[GrowPlan] Payment verification failed");
@@ -604,10 +730,11 @@ const GrowPlanPage = () => {
                 const subRes = await axios.get("https://haatzaseller.com/_functions/sellersubscription", {
                   params: { email: sellerEmail }
                 });
+                setSubscriptionRes(subRes);
                 console.log("[GrowPlanPage] Refreshed Subscription Response", subRes.data);
                 const ordersRes = subRes.data?.message?.orders || [];
                 if (ordersRes.length > 0) {
-                  setActiveSubscription(ordersRes[0]);
+                  setActiveSubscription(getLatestSubscription(ordersRes));
                 }
               } catch (refreshErr) {
                 console.warn("[GrowPlanPage] Failed to refresh subscription info:", refreshErr);
@@ -785,10 +912,11 @@ const GrowPlanPage = () => {
           const subRes = await axios.get("https://haatzaseller.com/_functions/sellersubscription", {
             params: { email: sellerEmail }
           });
+          setSubscriptionRes(subRes);
           console.log("[GrowPlanPage] Refreshed Subscription Response", subRes.data);
           const ordersRes = subRes.data?.message?.orders || [];
           if (ordersRes.length > 0) {
-            setActiveSubscription(ordersRes[0]);
+            setActiveSubscription(getLatestSubscription(ordersRes));
           }
         } catch (refreshErr) {
           console.warn("[GrowPlanPage] Failed to refresh subscription info:", refreshErr);
@@ -1076,21 +1204,6 @@ const GrowPlanPage = () => {
         </p>
       </div>
 
-      {activeSubscription && (
-        <div className="current-subscription-banner">
-          <div className="current-subscription-info">
-            <h3>Active Subscription Found</h3>
-            <p>
-              You are currently subscribed to the <strong>{activeSubscription.planName || activeSubscription.plan} Plan</strong> (Price: ₹{activeSubscription.planPrice || activeSubscription.amount}).
-            </p>
-          </div>
-          <div className="current-subscription-info" style={{ textAlign: "right" }}>
-            <p><strong>Start Date:</strong> {activeSubscription.startDate}</p>
-            <p><strong>Duration:</strong> {activeSubscription.planDuration || "1 Month"}</p>
-          </div>
-        </div>
-      )}
-
       {errorMsg && (
         <div className="grow-error-banner">
           <span>{errorMsg}</span>
@@ -1129,6 +1242,15 @@ const GrowPlanPage = () => {
                 <span className="plan-price">₹{plan.price.toLocaleString("en-IN")}</span>
                 <span className="plan-duration"> / month</span>
               </div>
+
+              {isSamePlan(plan) && expiryDate && (
+                <div className={isExpired ? "current-plan-expired-text" : "current-plan-active-text"}>
+                  {isExpired
+                    ? `Current plan expired on : ${formatPlanDate(expiryDate)}`
+                    : `Current plan expires on : ${formatPlanDate(expiryDate)}`}
+                </div>
+              )}
+
 
               {isSelected && (
                 <div className="plan-expanded-details">
@@ -1187,10 +1309,10 @@ const GrowPlanPage = () => {
         <div className="plans-action-content">
           <button
             className="btn-continue"
-            disabled={!selectedPlan}
-            onClick={() => setViewState("review")}
+            disabled={isBottomButtonDisabled}
+            onClick={handlePlanAction}
           >
-            <span>Continue</span>
+            <span>{getBottomActionText()}</span>
           </button>
         </div>
       </div>

@@ -73,8 +73,7 @@ describe("InventoryPage - Flow and API Tests", () => {
     await waitFor(() => {
       // Default status tab is "in_stock" (which filters for stock > 0)
       expect(screen.getByText("Porsche 911 GT3")).toBeInTheDocument();
-      expect(screen.getByText("M")).toBeInTheDocument();
-      expect(screen.getAllByText("100")[0]).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
     });
   });
 
@@ -83,9 +82,9 @@ describe("InventoryPage - Flow and API Tests", () => {
     render(<InventoryPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("M")).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
       // L has stock 0, so it shouldn't show in "in_stock" tab
-      expect(screen.queryByText("L")).not.toBeInTheDocument();
+      expect(screen.queryByText("0")).not.toBeInTheDocument();
     });
   });
 
@@ -102,8 +101,8 @@ describe("InventoryPage - Flow and API Tests", () => {
 
     // L should now be visible as it has stock 0
     await waitFor(() => {
-      expect(screen.getByText("L")).toBeInTheDocument();
-      expect(screen.queryByText("M")).not.toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
+      expect(screen.queryByText("100")).not.toBeInTheDocument();
     });
   });
 
@@ -113,7 +112,7 @@ describe("InventoryPage - Flow and API Tests", () => {
     render(<InventoryPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("M")).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
     });
 
     const searchInput = screen.getByPlaceholderText("Search By Inventory");
@@ -135,77 +134,97 @@ describe("InventoryPage - Flow and API Tests", () => {
     jest.useRealTimers();
   });
 
-  // 6. Plus button calls incrementInventory
-  test("6. Plus button calls incrementInventory", async () => {
+  // 6. Plus button calls incrementInventory on modal confirmation
+  test("6. Plus button increases local quantity, displays Update button, and calls incrementInventory on modal confirmation", async () => {
     sellerService.incrementInventory.mockResolvedValue({ success: true });
 
     render(<InventoryPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("100")[0]).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
     });
+
+    expect(screen.queryByRole("button", { name: "Update Inventory" })).not.toBeInTheDocument();
 
     const plusBtn = screen.getByLabelText("Increase quantity");
     fireEvent.click(plusBtn);
 
-    // Verify immediate increment API call
-    expect(sellerService.incrementInventory).toHaveBeenCalledWith(
-      mockSellerId,
-      "prod-1",
-      "var-1",
-      1
-    );
-
-    // Verify optimistic UI update
     await waitFor(() => {
-      expect(screen.getAllByText("101")[0]).toBeInTheDocument();
+      expect(screen.getByText("101")).toBeInTheDocument();
+    });
+
+    expect(sellerService.incrementInventory).not.toHaveBeenCalled();
+
+    const updateBtn = screen.getByRole("button", { name: "Update Inventory" });
+    expect(updateBtn).toBeInTheDocument();
+    fireEvent.click(updateBtn);
+
+    expect(screen.getByText("Are you sure you want to update the inventory?")).toBeInTheDocument();
+    expect(screen.getByText("Total Product: 1, Total Variant: 1")).toBeInTheDocument();
+
+    const okBtn = screen.getByRole("button", { name: "OK" });
+    fireEvent.click(okBtn);
+
+    await waitFor(() => {
+      expect(sellerService.incrementInventory).toHaveBeenCalledWith(
+        mockSellerId,
+        "prod-1",
+        "var-1",
+        1
+      );
     });
   });
 
-  // 7. Minus button calls decrementInventory
-  test("7. Minus button calls decrementInventory", async () => {
+  // 7. Minus button calls decrementInventory on modal confirmation
+  test("7. Minus button decreases local quantity, displays Update button, and calls decrementInventory on modal confirmation", async () => {
     sellerService.decrementInventory.mockResolvedValue({ success: true });
 
     render(<InventoryPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("100")[0]).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
     });
 
     const minusBtn = screen.getByLabelText("Decrease quantity");
     fireEvent.click(minusBtn);
 
-    // Verify immediate decrement API call
-    expect(sellerService.decrementInventory).toHaveBeenCalledWith(
-      mockSellerId,
-      "prod-1",
-      "var-1",
-      1
-    );
-
-    // Verify optimistic UI update
     await waitFor(() => {
-      expect(screen.getAllByText("99")[0]).toBeInTheDocument();
+      expect(screen.getByText("99")).toBeInTheDocument();
+    });
+
+    expect(sellerService.decrementInventory).not.toHaveBeenCalled();
+
+    const updateBtn = screen.getByRole("button", { name: "Update Inventory" });
+    fireEvent.click(updateBtn);
+
+    const okBtn = screen.getByRole("button", { name: "OK" });
+    fireEvent.click(okBtn);
+
+    await waitFor(() => {
+      expect(sellerService.decrementInventory).toHaveBeenCalledWith(
+        mockSellerId,
+        "prod-1",
+        "var-1",
+        1
+      );
     });
   });
 
   // 8. Stock never goes below 0
-  test("8. Stock never goes below 0", async () => {
+  test("8. Minus button is disabled when stock is 0", async () => {
     render(<InventoryPage />);
 
-    // Click Out of Stock tab
     fireEvent.click(screen.getByText(/Out of Stock/));
 
     await waitFor(() => {
-      expect(screen.getByText("L")).toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
     });
 
-    const minusBtn = screen.getAllByLabelText("Decrease quantity")[0];
+    const minusBtn = screen.getByLabelText("Decrease quantity");
     expect(minusBtn).toBeDisabled();
 
-    // Verify click does not fire decrementInventory
     fireEvent.click(minusBtn);
-    expect(sellerService.decrementInventory).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Update Inventory" })).not.toBeInTheDocument();
   });
 
   // 9. Empty response shows "No inventory items found"
@@ -230,6 +249,31 @@ describe("InventoryPage - Flow and API Tests", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Unable to load inventory. Please try again.")).toBeInTheDocument();
+    });
+  });
+
+  // 11. Changing quantity back to original hides the Update Inventory button
+  test("11. Changing quantity back to original hides the Update Inventory button", async () => {
+    render(<InventoryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("100")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("button", { name: "Update Inventory" })).not.toBeInTheDocument();
+
+    const plusBtn = screen.getByLabelText("Increase quantity");
+    fireEvent.click(plusBtn);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Update Inventory" })).toBeInTheDocument();
+    });
+
+    const minusBtn = screen.getByLabelText("Decrease quantity");
+    fireEvent.click(minusBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Update Inventory" })).not.toBeInTheDocument();
     });
   });
 });

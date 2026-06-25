@@ -20,8 +20,6 @@ const SettlementsPage = lazy(() => import("../pages/Settlements/SettlementsPage"
 const HelpPage = lazy(() => import("../pages/Help/HelpPage"));
 const AdvertisementPage = lazy(() => import("../pages/Advertisement/AdvertisementPage"));
 const CreateCampaignPage = lazy(() => import("../pages/Advertisement/CreateCampaignPage"));
-const HaatzUpPage = lazy(() => import("../pages/HaatzUp/HaatzUpPage"));
-const UploadReelPage = lazy(() => import("../pages/HaatzUp/UploadReelPage"));
 const GrowPlanPage = lazy(() => import("../pages/GrowPlan/GrowPlanPage"));
 
 
@@ -77,7 +75,7 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/signup" replace />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/otp" element={<OtpPage />} />
@@ -98,8 +96,6 @@ function AppRoutes() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="/advertisement" element={<AdvertisementPage />} />
           <Route path="/advertisement/create-campaign" element={<CreateCampaignPage />} />
-          <Route path="/haatzup" element={<HaatzUpPage />} />
-          <Route path="/haatzup/upload-reel" element={<UploadReelPage />} />
           <Route path="/growplan" element={<GrowPlanPage />} />
           <Route path="/productinsight" element={<PlaceholderPage title="Product Insight" />} />
           <Route path="/warehouse" element={<PlaceholderPage title="Warehouse" />} />

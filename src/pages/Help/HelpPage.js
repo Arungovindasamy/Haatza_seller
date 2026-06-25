@@ -1,59 +1,189 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { 
-  Search, 
-  RefreshCw, 
-  Plus, 
-  X, 
-  ChevronLeft, 
-  ChevronRight, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  Search,
+  RefreshCw,
+  Plus,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
   MessageSquare,
   Clock,
   Video,
   FileText
 } from "lucide-react";
-import { getSellerId } from "../../utils/sellerSession";
+import { getSellerId, resolveSellerEmail } from "../../utils/sellerSession";
 import { sellerService } from "../../services/sellerService";
 import "./HelpPage.css";
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const safeString = (value, fallback = "") => {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value);
+};
+
+const safeArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return [value];
+  return [];
+};
+
+// FIX: Local date formatter — avoids timezone-shift bugs from toISOString()
+const formatDateString = (date) => {
+  if (!date) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+/**
+ * FIX: Guard against string messages like "Email ID is required."
+ * being treated as a ticket array.
+ */
+const extractTicketsFromResponse = (response) => {
+  const apiData = response?.data ?? response;
+
+  // If apiData.message is a plain error string, bail out immediately
+  if (typeof apiData?.message === "string") {
+    console.warn("[HelpPage] extractTicketsFromResponse: message is a string (likely an error):", apiData.message);
+    return [];
+  }
+
+  const possibleTickets =
+    apiData?.message?.tickets ??
+    apiData?.message?.data ??
+    apiData?.message?.items ??
+    apiData?.tickets ??
+    apiData?.data?.tickets ??
+    apiData?.data?.message?.tickets ??
+    apiData?.data?.data?.tickets ??
+    apiData?.data?.data ??
+    apiData?.items ??
+    [];
+
+  const arr = safeArray(possibleTickets);
+
+  if (arr.length > 0) {
+    console.log("[HelpPage] extractTicketsFromResponse matched:", arr.length, "tickets");
+    return arr;
+  }
+
+  console.warn("[HelpPage] extractTicketsFromResponse: no tickets found in response", response);
+  return [];
+};
+
+/**
+ * Unwrap one extra nesting level before reading fields.
+ */
+const normalizeTicket = (raw, index) => {
+  const source = raw?.ticket ?? raw?.data ?? raw;
+
+  const ticketId =
+    source.ticketId ??
+    source.ticketID ??
+    source.ticket_id ??
+    source.id ??
+    source._id ??
+    source.ticketNo ??
+    source.ticketNumber ??
+    source.TicketID ??
+    "";
+
+  return {
+    id: safeString(ticketId, `ticket-row-${index}`),
+    ticketId: safeString(ticketId, `HT-${index + 1}`),
+    subject: safeString(
+      source.subject ?? source.title ?? source.ticketSubject,
+      "No Subject"
+    ),
+    category: safeString(
+      source.category ?? source.type ?? source.issueCategory,
+      "General Support"
+    ),
+    priority: safeString(source.priority, "Medium"),
+    status: safeString(source.status, "Open"),
+    description: safeString(source.description ?? source.message ?? source.details, ""),
+    createdAt: source.createdAt ?? source.createdDate ?? source.created_at ?? source.date ?? "",
+    assignedTo: safeString(source.assignedTo ?? source.assignee, "Support Team"),
+    sellerId: safeString(source.sellerId ?? source.userId, ""),
+    email: safeString(source.email ?? source.sellerEmail ?? ""),
+    raw: source,
+  };
+};
+
+const getTicketDate = (ticket) => {
+  const d = new Date(ticket.createdAt || 0);
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+};
+
+const dedupeTickets = (tickets) => {
+  const map = new Map();
+  tickets.forEach((ticket, index) => {
+    const key =
+      ticket.ticketId && !ticket.ticketId.startsWith("HT-")
+        ? ticket.ticketId
+        : `${ticket.subject}-${ticket.createdAt}-${ticket.sellerId}-${index}`;
+    if (!map.has(key)) map.set(key, ticket);
+  });
+  return Array.from(map.values());
+};
+
+const matchesSearch = (ticket, term) => {
+  const q = term.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    ticket.ticketId.toLowerCase().includes(q) ||
+    ticket.subject.toLowerCase().includes(q) ||
+    ticket.category.toLowerCase().includes(q) ||
+    ticket.status.toLowerCase().includes(q) ||
+    ticket.priority.toLowerCase().includes(q) ||
+    ticket.description.toLowerCase().includes(q)
+  );
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const HelpPage = () => {
+  // FIX: Resolve both sellerId and sellerEmail at component level
   const sellerId = getSellerId();
+  const sellerEmail = resolveSellerEmail();
 
-  const [activeTab, setActiveTab] = useState("tickets"); // "tickets" | "tutorials"
+  // FIX: Compute date range once — first day of current month to today
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const fromDate = formatDateString(firstDayOfMonth);
+  const toDate = formatDateString(today);
 
+  const [activeTab, setActiveTab] = useState("tickets");
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Tutorials state
   const [tutorials, setTutorials] = useState([]);
   const [tutorialsLoading, setTutorialsLoading] = useState(false);
   const [tutorialsError, setTutorialsError] = useState(null);
-  
-  // Search & Filters state
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date-desc");
-  
-  // Pagination
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
 
-  // Form state
   const [formSubject, setFormSubject] = useState("");
   const [formCategory, setFormCategory] = useState("Order");
   const [formPriority, setFormPriority] = useState("Medium");
   const [formDescription, setFormDescription] = useState("");
   const [formError, setFormError] = useState("");
 
-  // Toast
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (msg) => {
@@ -61,30 +191,47 @@ const HelpPage = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Fetch Tickets
-  const fetchTickets = useCallback(async () => {
-    if (!sellerId) {
-      setError("Seller session not found. Please login again.");
+  // ── FIX: loadTickets now uses email + fromDate + toDate ────────────────────
+  const loadTickets = useCallback(async (silent = false) => {
+    // Validate required params before hitting the API
+    if (!sellerEmail) {
+      setError("Seller email not found. Please login again.");
       setLoading(false);
       return;
     }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await sellerService.getTickets(sellerId);
-      const rawTickets = res?.message?.data || res?.data || res?.tickets || [];
-      
-      const mapped = rawTickets.map((t) => ({
-        id: t._id || t.id || `TCK-${Math.floor(1000 + Math.random() * 9000)}`,
-        subject: t.subject || "No Subject",
-        category: t.category || "General Support",
-        priority: t.priority || "Medium",
-        status: t.status || "Open",
-        description: t.description || "",
-        createdDate: t.createdDate || t.createdAt || new Date().toISOString(),
-      }));
+    if (!fromDate || !toDate) {
+      setError("Ticket date range is missing.");
+      setLoading(false);
+      return;
+    }
 
-      setTickets(mapped);
+    console.log("[HelpPage] Active Seller ID:", sellerId);
+    console.log("[HelpPage] Active Seller Email:", sellerEmail);
+    console.log("[HelpPage] Ticket Fetch Params:", { email: sellerEmail, fromDate, toDate });
+
+    if (!silent) setLoading(true);
+    setError(null);
+
+    try {
+      // FIX: Call getSellerTickets with email + fromDate + toDate
+      // Network tab will show: sellertickets?email=...&fromDate=...&toDate=...
+      const ticketsResponse = await sellerService.getSellerTickets({
+        email: sellerEmail,
+        fromDate,
+        toDate,
+      });
+
+      console.log("[HelpPage] Raw Tickets Response:", JSON.stringify(ticketsResponse, null, 2));
+
+      const rawTickets = extractTicketsFromResponse(ticketsResponse);
+      console.log("[HelpPage] Extracted Tickets Count:", rawTickets.length);
+
+      const normalized = dedupeTickets(rawTickets.map(normalizeTicket));
+      // Sort newest first
+      normalized.sort((a, b) => getTicketDate(b) - getTicketDate(a));
+      console.log("[HelpPage] Normalized Tickets:", normalized);
+
+      setTickets(normalized);
     } catch (err) {
       console.error("[HelpPage] Error fetching tickets:", err);
       setError("Failed to load support tickets. Please verify connection.");
@@ -92,15 +239,16 @@ const HelpPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sellerId]);
+  }, [sellerId, sellerEmail, fromDate, toDate]);
 
-  // Fetch Tutorials
+  // ── Fetch tutorials ────────────────────────────────────────────────────────
   const fetchTutorials = useCallback(async () => {
     setTutorialsLoading(true);
     setTutorialsError(null);
     try {
       const res = await sellerService.getSellerTutorials();
-      const rawTutorials = res?.data || res?.message?.tutorials || res?.tutorials || res?.message || [];
+      const rawTutorials =
+        res?.data || res?.message?.tutorials || res?.tutorials || res?.message || [];
       setTutorials(Array.isArray(rawTutorials) ? rawTutorials : []);
     } catch (err) {
       console.error("[HelpPage] Error fetching tutorials:", err);
@@ -113,13 +261,13 @@ const HelpPage = () => {
 
   useEffect(() => {
     if (activeTab === "tickets") {
-      fetchTickets();
+      loadTickets();
     } else {
       fetchTutorials();
     }
-  }, [activeTab, fetchTickets, fetchTutorials]);
+  }, [activeTab, loadTickets, fetchTutorials]);
 
-  // Handle Create Ticket Submit
+  // ── Create ticket ──────────────────────────────────────────────────────────
   const handleCreateTicketSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
@@ -128,87 +276,145 @@ const HelpPage = () => {
       setFormError("Seller session not found. Please login again.");
       return;
     }
-    if (!formSubject.trim()) {
-      setFormError("Subject is required.");
-      return;
-    }
-    if (!formDescription.trim()) {
-      setFormError("Description is required.");
-      return;
-    }
 
     setSubmitting(true);
     try {
-      const ticketData = {
+      // FIX: Correct payload — createdAt (not createdDate), userId, assignedTo
+      const resolvedSellerId = sellerId;
+      const ticketPayload = {
+        sellerId: resolvedSellerId,
         subject: formSubject.trim(),
         category: formCategory,
         priority: formPriority,
         description: formDescription.trim(),
         status: "Open",
-        createdDate: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        userId: resolvedSellerId,
+        assignedTo: "Support Team",
       };
 
-      await sellerService.createTicket(sellerId, ticketData);
-      
-      showToast("Ticket created successfully!");
-      setIsCreateModalOpen(false);
-      
-      setFormSubject("");
-      setFormCategory("Order");
-      setFormPriority("Medium");
-      setFormDescription("");
+      console.log("[HelpPage] Create Ticket Payload:", ticketPayload);
 
-      fetchTickets();
+      if (!ticketPayload.sellerId) throw new Error("sellerId must exist");
+      if (!ticketPayload.subject) throw new Error("subject must not be empty");
+      if (!ticketPayload.category) throw new Error("category must not be empty");
+      if (!ticketPayload.priority) throw new Error("priority must not be empty");
+      if (!ticketPayload.description) throw new Error("description must not be empty");
+
+      const createResponse = await sellerService.createTicket(resolvedSellerId, ticketPayload);
+      console.log("[HelpPage] Create Ticket Response:", JSON.stringify(createResponse, null, 2));
+
+      const apiData = createResponse?.data ?? createResponse;
+
+      const isSuccess =
+        apiData?.status === "success" ||
+        apiData?.status === "Success" ||
+        apiData?.sellerId ||
+        apiData?.message?.sellerId ||
+        apiData?.ticketId ||
+        apiData?.message?.ticketId ||
+        apiData?.message?.ticket ||
+        apiData?.message?.status === "Open";
+
+      if (isSuccess) {
+        showToast("Ticket created successfully!");
+        setIsCreateModalOpen(false);
+        setFormSubject("");
+        setFormCategory("Order");
+        setFormPriority("Medium");
+        setFormDescription("");
+
+        // Optimistic prepend while we wait for the refetch
+        const createdRaw =
+          apiData?.message?.ticket ??
+          apiData?.ticket ??
+          apiData?.message ??
+          apiData;
+
+        const mergedRaw =
+          createdRaw && typeof createdRaw === "object"
+            ? { ...ticketPayload, ...createdRaw }
+            : { ...ticketPayload };
+
+        const optimistic = normalizeTicket(mergedRaw, 0);
+
+        setTickets((prev) => {
+          const exists = prev.some(
+            (t) =>
+              String(t.ticketId) === String(optimistic.ticketId) &&
+              !optimistic.ticketId.startsWith("HT-")
+          );
+          if (exists) return prev;
+          return dedupeTickets([optimistic, ...prev]);
+        });
+
+        // FIX: Hard refetch using email + fromDate + toDate to sync with backend
+        await loadTickets(true);
+      } else {
+        const errorMsg =
+          apiData?.message?.message ?? apiData?.message ?? "Failed to create ticket";
+        setFormError(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
+      }
     } catch (err) {
       console.error("[HelpPage] Create ticket failed:", err);
-      setFormError("Failed to submit support ticket to backend. Please try again.");
+      const apiData = err.response?.data ?? err.response;
+      const errorMsg =
+        apiData?.message?.message ??
+        apiData?.message ??
+        err.message ??
+        "Failed to submit support ticket. Please try again.";
+      setFormError(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Filters logic
+  // ── Filters / sort ─────────────────────────────────────────────────────────
   const filteredTickets = useMemo(() => {
-    return tickets.filter((t) => {
-      const matchesSearch = 
-        t.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.description.toLowerCase().includes(searchQuery.toLowerCase());
-        
-      const matchesStatus = statusFilter === "all" || t.status.toLowerCase() === statusFilter.toLowerCase();
-      const matchesPriority = priorityFilter === "all" || t.priority.toLowerCase() === priorityFilter.toLowerCase();
-
-      return matchesSearch && matchesStatus && matchesPriority;
-    }).sort((a, b) => {
-      if (sortBy === "date-desc") return new Date(b.createdDate) - new Date(a.createdDate);
-      if (sortBy === "date-asc") return new Date(a.createdDate) - new Date(b.createdDate);
-      if (sortBy === "priority-high") {
-        const order = { high: 3, medium: 2, low: 1 };
-        return (order[b.priority.toLowerCase()] || 0) - (order[a.priority.toLowerCase()] || 0);
-      }
-      return 0;
-    });
+    return tickets
+      .filter((t) => {
+        const search = matchesSearch(t, searchQuery);
+        const status =
+          statusFilter === "all" || t.status.toLowerCase() === statusFilter.toLowerCase();
+        const priority =
+          priorityFilter === "all" || t.priority.toLowerCase() === priorityFilter.toLowerCase();
+        return search && status && priority;
+      })
+      .sort((a, b) => {
+        if (sortBy === "date-desc") return getTicketDate(b) - getTicketDate(a);
+        if (sortBy === "date-asc") return getTicketDate(a) - getTicketDate(b);
+        if (sortBy === "priority-high") {
+          const order = { high: 3, medium: 2, low: 1 };
+          return (order[b.priority.toLowerCase()] || 0) - (order[a.priority.toLowerCase()] || 0);
+        }
+        return 0;
+      });
   }, [tickets, searchQuery, statusFilter, priorityFilter, sortBy]);
 
-  // Pagination logic
   const paginatedTickets = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredTickets.slice(startIndex, startIndex + itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredTickets.slice(start, start + itemsPerPage);
   }, [filteredTickets, currentPage]);
 
   const totalPages = Math.ceil(filteredTickets.length / itemsPerPage) || 1;
 
-  // Format dates
   const formatDate = (isoString) => {
     try {
       const d = new Date(isoString);
       if (isNaN(d.getTime())) return "Recent";
-      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } catch {
       return "Recent";
     }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="help-tickets-root">
       {toastMessage && (
@@ -217,50 +423,44 @@ const HelpPage = () => {
         </div>
       )}
 
-      {/* Top Breadcrumb & Page title header */}
       <div className="help-page-header-v2">
         <div className="header-info-left">
           <nav className="help-breadcrumb" aria-label="breadcrumb">
-            <span>Dashboard</span> &gt; <span>Support</span> &gt; <span className="active">{activeTab === "tickets" ? "Tickets" : "Help & Tutorials"}</span>
+            <span>Dashboard</span> &gt; <span>Support</span> &gt;{" "}
+            <span className="active">
+              {activeTab === "tickets" ? "Tickets" : "Help & Tutorials"}
+            </span>
           </nav>
-          <h1 className="help-page-title">{activeTab === "tickets" ? "My Tickets" : "Help & Tutorials"}</h1>
+          <h1 className="help-page-title">
+            {activeTab === "tickets" ? "My Tickets" : "Help & Tutorials"}
+          </h1>
         </div>
         {activeTab === "tickets" && (
-          <button 
-            className="btn-create-ticket-main"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
+          <button className="btn-create-ticket-main" onClick={() => setIsCreateModalOpen(true)}>
             <Plus size={16} />
             <span>Create Ticket</span>
           </button>
         )}
       </div>
 
-      {/* Tabs for Tickets vs Tutorials */}
       <div className="help-tabs-container">
-        <button 
+        <button
           className={`help-tab-btn ${activeTab === "tickets" ? "active" : ""}`}
-          onClick={() => {
-            setActiveTab("tickets");
-            setCurrentPage(1);
-          }}
+          onClick={() => { setActiveTab("tickets"); setCurrentPage(1); }}
         >
           Support Tickets
         </button>
-        <button 
+        <button
           className={`help-tab-btn ${activeTab === "tutorials" ? "active" : ""}`}
-          onClick={() => {
-            setActiveTab("tutorials");
-            setCurrentPage(1);
-          }}
+          onClick={() => { setActiveTab("tutorials"); setCurrentPage(1); }}
         >
           Help & Tutorials
         </button>
       </div>
 
-      {/* Main content grid */}
       <div className="help-content-v2">
-        {/* Ticket Tab Content */}
+
+        {/* ── Tickets tab ── */}
         {activeTab === "tickets" && (
           <>
             {error && (
@@ -277,24 +477,17 @@ const HelpPage = () => {
                 <p>Loading your support tickets...</p>
               </div>
             ) : tickets.length === 0 ? (
-              /* Empty state Card */
               <div className="help-empty-card-container">
                 <div className="help-empty-state-card">
-                  <div className="empty-icon-wrapper">
-                    <MessageSquare size={40} />
-                  </div>
+                  <div className="empty-icon-wrapper"><MessageSquare size={40} /></div>
                   <h3>No Tickets Found</h3>
                   <p>You have not created any support tickets yet. Create a new ticket to get assistance from our support team.</p>
-                  <button 
-                    className="btn-empty-create"
-                    onClick={() => setIsCreateModalOpen(true)}
-                  >
+                  <button className="btn-empty-create" onClick={() => setIsCreateModalOpen(true)}>
                     Create New Ticket
                   </button>
                 </div>
               </div>
             ) : (
-              /* Ticket Table & Filters */
               <div className="help-dashboard-card">
                 <div className="help-toolbar-v2">
                   <div className="toolbar-search-wrap">
@@ -303,10 +496,7 @@ const HelpPage = () => {
                       type="text"
                       placeholder="Search tickets by ID, subject..."
                       value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setCurrentPage(1);
-                      }}
+                      onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                       className="search-input"
                     />
                   </div>
@@ -316,10 +506,7 @@ const HelpPage = () => {
                       <span className="filter-label">Status</span>
                       <select
                         value={statusFilter}
-                        onChange={(e) => {
-                          setStatusFilter(e.target.value);
-                          setCurrentPage(1);
-                        }}
+                        onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
                         className="filter-select"
                       >
                         <option value="all">All Statuses</option>
@@ -334,10 +521,7 @@ const HelpPage = () => {
                       <span className="filter-label">Priority</span>
                       <select
                         value={priorityFilter}
-                        onChange={(e) => {
-                          setPriorityFilter(e.target.value);
-                          setCurrentPage(1);
-                        }}
+                        onChange={(e) => { setPriorityFilter(e.target.value); setCurrentPage(1); }}
                         className="filter-select"
                       >
                         <option value="all">All Priorities</option>
@@ -349,22 +533,14 @@ const HelpPage = () => {
 
                     <div className="filter-select-wrapper">
                       <span className="filter-label">Sort By</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="filter-select"
-                      >
+                      <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="filter-select">
                         <option value="date-desc">Newest First</option>
                         <option value="date-asc">Oldest First</option>
                         <option value="priority-high">Highest Priority</option>
                       </select>
                     </div>
 
-                    <button 
-                      className="btn-toolbar-refresh"
-                      onClick={fetchTickets}
-                      title="Refresh tickets logs"
-                    >
+                    <button className="btn-toolbar-refresh" onClick={() => loadTickets()} title="Refresh tickets">
                       <RefreshCw size={14} />
                     </button>
                   </div>
@@ -393,13 +569,11 @@ const HelpPage = () => {
                       ) : (
                         paginatedTickets.map((t) => (
                           <tr key={t.id} className="help-table-row">
-                            <td className="font-semibold text-blue">{t.id}</td>
+                            <td className="font-semibold text-blue">{t.ticketId}</td>
                             <td className="table-subject-cell" title={t.subject}>
                               <div className="subject-text">{t.subject}</div>
                             </td>
-                            <td>
-                              <span className="category-tag">{t.category}</span>
-                            </td>
+                            <td><span className="category-tag">{t.category}</span></td>
                             <td>
                               <span className={`priority-tag ${t.priority.toLowerCase()}`}>
                                 {t.priority}
@@ -411,12 +585,9 @@ const HelpPage = () => {
                                 {t.status}
                               </span>
                             </td>
-                            <td className="text-muted text-sm">{formatDate(t.createdDate)}</td>
+                            <td className="text-muted text-sm">{formatDate(t.createdAt)}</td>
                             <td className="text-right">
-                              <button 
-                                className="btn-table-view"
-                                onClick={() => setSelectedTicket(t)}
-                              >
+                              <button className="btn-table-view" onClick={() => setSelectedTicket(t)}>
                                 View Details
                               </button>
                             </td>
@@ -430,22 +601,16 @@ const HelpPage = () => {
                 {filteredTickets.length > 0 && (
                   <div className="help-table-pagination">
                     <span className="pagination-count-label">
-                      Showing <strong>{((currentPage - 1) * itemsPerPage) + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, filteredTickets.length)}</strong> of <strong>{filteredTickets.length}</strong> tickets
+                      Showing <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> to{" "}
+                      <strong>{Math.min(currentPage * itemsPerPage, filteredTickets.length)}</strong> of{" "}
+                      <strong>{filteredTickets.length}</strong> tickets
                     </span>
                     <div className="pagination-buttons">
-                      <button
-                        className="btn-paginator"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(prev => prev - 1)}
-                      >
+                      <button className="btn-paginator" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
                         <ChevronLeft size={16} />
                       </button>
                       <span className="pagination-pages-label">Page {currentPage} of {totalPages}</span>
-                      <button
-                        className="btn-paginator"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage(prev => prev + 1)}
-                      >
+                      <button className="btn-paginator" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
                         <ChevronRight size={16} />
                       </button>
                     </div>
@@ -456,7 +621,7 @@ const HelpPage = () => {
           </>
         )}
 
-        {/* Tutorials Tab Content */}
+        {/* ── Tutorials tab ── */}
         {activeTab === "tutorials" && (
           <>
             {tutorialsError && (
@@ -475,14 +640,10 @@ const HelpPage = () => {
             ) : tutorials.length === 0 ? (
               <div className="help-empty-card-container">
                 <div className="help-empty-state-card">
-                  <div className="empty-icon-wrapper">
-                    <FileText size={40} />
-                  </div>
+                  <div className="empty-icon-wrapper"><FileText size={40} /></div>
                   <h3>No Tutorials Found</h3>
                   <p>There are no tutorials or help guides available at this moment. Please check back later.</p>
-                  <button className="btn-empty-create" onClick={fetchTutorials}>
-                    Refresh Tutorials
-                  </button>
+                  <button className="btn-empty-create" onClick={fetchTutorials}>Refresh Tutorials</button>
                 </div>
               </div>
             ) : (
@@ -499,38 +660,23 @@ const HelpPage = () => {
                     <div key={item.id || item._id || idx} className="tutorial-card">
                       {isVideo ? (
                         <div className="tutorial-media-wrapper">
-                          <img 
-                            src={thumbnail} 
-                            alt={title} 
-                            className="tutorial-video-thumbnail" 
-                            onError={(e) => {
-                              e.target.src = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop";
-                            }}
+                          <img
+                            src={thumbnail}
+                            alt={title}
+                            className="tutorial-video-thumbnail"
+                            onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop"; }}
                           />
-                          <a 
-                            href={mediaUrl || docUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="tutorial-video-play-btn"
-                            title="Watch video tutorial"
-                          >
+                          <a href={mediaUrl || docUrl} target="_blank" rel="noopener noreferrer" className="tutorial-video-play-btn" title="Watch video tutorial">
                             <Video size={20} />
                           </a>
                         </div>
                       ) : (
-                        <div className="tutorial-doc-wrapper">
-                          <FileText size={40} />
-                        </div>
+                        <div className="tutorial-doc-wrapper"><FileText size={40} /></div>
                       )}
                       <div className="tutorial-card-body">
                         <h3 className="tutorial-card-title">{title}</h3>
                         <p className="tutorial-card-desc">{desc}</p>
-                        <a 
-                          href={mediaUrl || docUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="tutorial-card-btn"
-                        >
+                        <a href={mediaUrl || docUrl} target="_blank" rel="noopener noreferrer" className="tutorial-card-btn">
                           {isVideo ? "Watch Tutorial" : "Read Article"}
                         </a>
                       </div>
@@ -543,18 +689,13 @@ const HelpPage = () => {
         )}
       </div>
 
-      {/* CREATE TICKET MODAL */}
+      {/* ── Create Ticket Modal ── */}
       {isCreateModalOpen && (
         <div className="help-modal-overlay" onClick={() => !submitting && setIsCreateModalOpen(false)}>
           <div className="help-ticket-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Create a New Ticket</h3>
-              <button 
-                type="button" 
-                className="btn-modal-close" 
-                onClick={() => setIsCreateModalOpen(false)}
-                disabled={submitting}
-              >
+              <button type="button" className="btn-modal-close" onClick={() => setIsCreateModalOpen(false)} disabled={submitting}>
                 <X size={20} />
               </button>
             </div>
@@ -584,12 +725,7 @@ const HelpPage = () => {
                 <div className="form-row-2-fields">
                   <div className="form-group-v2">
                     <label htmlFor="ticket-category">Category</label>
-                    <select
-                      id="ticket-category"
-                      value={formCategory}
-                      onChange={(e) => setFormCategory(e.target.value)}
-                      disabled={submitting}
-                    >
+                    <select id="ticket-category" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} disabled={submitting}>
                       <option value="Order">Order Support</option>
                       <option value="Settlements">Settlement / Payouts</option>
                       <option value="Listing">Product Listing</option>
@@ -601,12 +737,7 @@ const HelpPage = () => {
 
                   <div className="form-group-v2">
                     <label htmlFor="ticket-priority">Priority</label>
-                    <select
-                      id="ticket-priority"
-                      value={formPriority}
-                      onChange={(e) => setFormPriority(e.target.value)}
-                      disabled={submitting}
-                    >
+                    <select id="ticket-priority" value={formPriority} onChange={(e) => setFormPriority(e.target.value)} disabled={submitting}>
                       <option value="Low">Low</option>
                       <option value="Medium">Medium</option>
                       <option value="High">High</option>
@@ -629,19 +760,10 @@ const HelpPage = () => {
               </div>
 
               <div className="modal-actions-footer">
-                <button
-                  type="button"
-                  className="btn-form-cancel"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  disabled={submitting}
-                >
+                <button type="button" className="btn-form-cancel" onClick={() => setIsCreateModalOpen(false)} disabled={submitting}>
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn-form-submit"
-                  disabled={submitting}
-                >
+                <button type="submit" className="btn-form-submit" disabled={submitting}>
                   {submitting ? "Submitting..." : "Submit Ticket"}
                 </button>
               </div>
@@ -650,20 +772,16 @@ const HelpPage = () => {
         </div>
       )}
 
-      {/* VIEW DETAILS MODAL */}
+      {/* ── View Details Modal ── */}
       {selectedTicket && (
         <div className="help-modal-overlay" onClick={() => setSelectedTicket(null)}>
           <div className="help-ticket-details-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="details-header-title">
-                <span className="ticket-id-badge">{selectedTicket.id}</span>
+                <span className="ticket-id-badge">{selectedTicket.ticketId}</span>
                 <h3>Ticket Details</h3>
               </div>
-              <button 
-                type="button" 
-                className="btn-modal-close" 
-                onClick={() => setSelectedTicket(null)}
-              >
+              <button type="button" className="btn-modal-close" onClick={() => setSelectedTicket(null)}>
                 <X size={20} />
               </button>
             </div>
@@ -688,7 +806,7 @@ const HelpPage = () => {
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Submitted On</span>
-                  <span className="meta-val">{formatDate(selectedTicket.createdDate)}</span>
+                  <span className="meta-val">{formatDate(selectedTicket.createdAt)}</span>
                 </div>
               </div>
 
@@ -709,7 +827,7 @@ const HelpPage = () => {
                     <div className="node-circle"><CheckCircle2 size={14} /></div>
                     <div className="node-info">
                       <p className="node-title">Ticket Registered</p>
-                      <p className="node-time">{formatDate(selectedTicket.createdDate)}</p>
+                      <p className="node-time">{formatDate(selectedTicket.createdAt)}</p>
                     </div>
                   </div>
                   <div className={`timeline-node ${selectedTicket.status !== "Open" ? "active" : ""}`}>
@@ -724,11 +842,7 @@ const HelpPage = () => {
             </div>
 
             <div className="modal-actions-footer">
-              <button
-                type="button"
-                className="btn-form-cancel"
-                onClick={() => setSelectedTicket(null)}
-              >
+              <button type="button" className="btn-form-cancel" onClick={() => setSelectedTicket(null)}>
                 Close View
               </button>
             </div>

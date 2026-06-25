@@ -32,7 +32,7 @@ class MockRazorpay {
   on(event, handler) {
     this.eventHandlers[event] = handler;
   }
-  open() {}
+  open() { }
 }
 window.Razorpay = MockRazorpay;
 
@@ -72,7 +72,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
     resolveSellerId.mockReturnValue(mockSellerId);
     resolveSellerEmail.mockReturnValue(mockSellerEmail);
     mockRazorpayInstance = null;
-    
+
     // Default mock behavior
     axios.get.mockImplementation((url) => {
       if (url.includes("getPlans")) {
@@ -177,6 +177,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       planName: "Enterprise",
       planPrice: 2499,
       startDate: "20-06-2026",
+      endDate: "20-07-2026",
       planDuration: "1 Month"
     };
 
@@ -200,8 +201,8 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Active Subscription Found")).toBeInTheDocument();
-      expect(screen.getByText(/You are currently subscribed to the/)).toBeInTheDocument();
+      expect(screen.queryByText("Active Subscription Found")).not.toBeInTheDocument();
+      expect(screen.getByText(/Current plan expires on/)).toBeInTheDocument();
     });
   });
 
@@ -221,8 +222,8 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
     const growthCard = screen.getByText("Growth").closest(".plan-card");
     fireEvent.click(growthCard);
 
-    // Click Continue
-    const continueBtn = screen.getByText("Continue").closest("button");
+    // Click Select Plan
+    const continueBtn = screen.getByText("Select Plan").closest("button");
     fireEvent.click(continueBtn);
 
     // Verify Plan Review header shows up
@@ -244,7 +245,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
     });
 
     // Pro is preselected as it's recommended
-    const continueBtn = screen.getByText("Continue").closest("button");
+    const continueBtn = screen.getByText("Select Plan").closest("button");
     fireEvent.click(continueBtn);
 
     expect(screen.getByText("Pro Plan")).toBeInTheDocument();
@@ -263,7 +264,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    const continueBtn = screen.getByText("Continue").closest("button");
+    const continueBtn = screen.getByText("Select Plan").closest("button");
     fireEvent.click(continueBtn);
 
     // Wallet balance is mocked to 500
@@ -310,7 +311,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
 
     // Enter coupon
     const referralInput = screen.getByPlaceholderText("Enter Referral Code");
@@ -356,7 +357,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
 
     const referralInput = screen.getByPlaceholderText("Enter Referral Code");
     fireEvent.change(referralInput, { target: { value: "INVALIDCODE" } });
@@ -394,7 +395,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
 
     // Check redeem wallet checkbox
     fireEvent.click(screen.getByLabelText(/Redeem Wallet Balance\?/));
@@ -454,7 +455,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
 
     // Click Subscribe Now
     fireEvent.click(screen.getByText("Subscribe Now"));
@@ -580,7 +581,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
 
     // Check Wallet Redeem checkbox
     fireEvent.click(screen.getByLabelText(/Redeem Wallet Balance\?/));
@@ -645,7 +646,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
     fireEvent.click(screen.getByText("Subscribe Now"));
     fireEvent.click(screen.getByText("Yes"));
 
@@ -692,7 +693,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
     fireEvent.click(screen.getByText("Subscribe Now"));
     fireEvent.click(screen.getByText("Yes"));
 
@@ -734,9 +735,9 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getAllByText("Pro")[0]).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
     fireEvent.click(screen.getByText("Subscribe Now"));
-    
+
     const yesBtn = screen.getByText("Yes");
     fireEvent.click(yesBtn);
 
@@ -816,8 +817,8 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getByText("Growth")).toBeInTheDocument();
     });
 
-    // Pro is default. Click Continue
-    const continueBtn = screen.getByText("Continue").closest("button");
+    // Pro is default. Click Select Plan
+    const continueBtn = screen.getByText("Select Plan").closest("button");
     fireEvent.click(continueBtn);
 
     // Verify Plan Review header shows up
@@ -884,7 +885,7 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
       expect(screen.getByText("Growth")).toBeInTheDocument();
     });
 
-    const continueBtn = screen.getByText("Continue").closest("button");
+    const continueBtn = screen.getByText("Select Plan").closest("button");
     fireEvent.click(continueBtn);
 
     // Find Plan Review card container
@@ -938,5 +939,147 @@ describe("GrowPlanPage - End to End Flow Tests", () => {
     expect(document.querySelector(".plans-list")).toBeInTheDocument();
     expect(document.querySelector(".plans-action-bar")).toBeInTheDocument();
     expect(document.querySelector(".grow-plan-footer-content")).toBeInTheDocument();
+  });
+
+  // 29. Expired Growth Plan displays Renew on Growth, and Upgrade on others
+  test("29. Expired Growth Plan displays Renew on Growth, and Upgrade on others", async () => {
+    const mockExpiredSubscription = {
+      planName: "Growth",
+      planPrice: 999,
+      startDate: "20-04-2026",
+      endDate: "20-05-2026",
+      planDuration: "1 Month"
+    };
+
+    axios.get.mockImplementation((url) => {
+      if (url.includes("getPlans")) {
+        return Promise.resolve({ data: mockPlansData });
+      }
+      if (url.includes("checkWalletBalance")) {
+        return Promise.resolve({ data: { message: { RemainingBalance: 100 } } });
+      }
+      if (url.includes("sellersubscription")) {
+        return Promise.resolve({ data: { message: { orders: [mockExpiredSubscription] } } });
+      }
+      return Promise.reject(new Error("Unknown GET URL"));
+    });
+
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      const growthCard = screen.getByText("Growth").closest(".plan-card");
+      expect(growthCard).toHaveTextContent("Current plan expired on : 20 May 26");
+      expect(growthCard).not.toHaveTextContent("Renew Plan");
+    });
+
+    // Select Growth: bottom button shows "Renew Plan"
+    const growthCard = screen.getByText("Growth").closest(".plan-card");
+    fireEvent.click(growthCard);
+    expect(screen.getByRole("button", { name: "Renew Plan" })).toBeInTheDocument();
+
+    // Select Pro: bottom button shows "Upgrade Plan"
+    const proCard = screen.getAllByText("Pro")[0].closest(".plan-card");
+    fireEvent.click(proCard);
+    expect(screen.getByRole("button", { name: "Upgrade Plan" })).toBeInTheDocument();
+
+    // Select Enterprise: bottom button shows "Upgrade Plan"
+    const entCard = screen.getByText("Enterprise").closest(".plan-card");
+    fireEvent.click(entCard);
+    expect(screen.getByRole("button", { name: "Upgrade Plan" })).toBeInTheDocument();
+  });
+
+  // 30. Expired Pro Plan displays Renew on Pro, and Upgrade on others
+  test("30. Expired Pro Plan displays Renew on Pro, and Upgrade on others", async () => {
+    const mockExpiredSubscription = {
+      planName: "Pro",
+      planPrice: 1999,
+      startDate: "20-04-2026",
+      endDate: "20-05-2026",
+      planDuration: "1 Month"
+    };
+
+    axios.get.mockImplementation((url) => {
+      if (url.includes("getPlans")) {
+        return Promise.resolve({ data: mockPlansData });
+      }
+      if (url.includes("checkWalletBalance")) {
+        return Promise.resolve({ data: { message: { RemainingBalance: 100 } } });
+      }
+      if (url.includes("sellersubscription")) {
+        return Promise.resolve({ data: { message: { orders: [mockExpiredSubscription] } } });
+      }
+      return Promise.reject(new Error("Unknown GET URL"));
+    });
+
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      const proCard = screen.getAllByText("Pro")[0].closest(".plan-card");
+      expect(proCard).toHaveTextContent("Current plan expired on : 20 May 26");
+      expect(proCard).not.toHaveTextContent("Renew Plan");
+    });
+
+    // Pro is preselected, so bottom button says Renew Plan
+    expect(screen.getByRole("button", { name: "Renew Plan" })).toBeInTheDocument();
+
+    // Select Growth: bottom button shows "Upgrade Plan"
+    const growthCard = screen.getByText("Growth").closest(".plan-card");
+    fireEvent.click(growthCard);
+    expect(screen.getByRole("button", { name: "Upgrade Plan" })).toBeInTheDocument();
+
+    // Select Enterprise: bottom button shows "Upgrade Plan"
+    const entCard = screen.getByText("Enterprise").closest(".plan-card");
+    fireEvent.click(entCard);
+    expect(screen.getByRole("button", { name: "Upgrade Plan" })).toBeInTheDocument();
+  });
+
+  // 31. Active Pro Plan displays Current Plan and disables bottom button on Pro selection, and Upgrade Plan on others
+  test("31. Active Pro Plan displays Current Plan and disables bottom button on Pro selection, and Upgrade Plan on others", async () => {
+    const mockActiveSubscription = {
+      planName: "Pro",
+      planPrice: 1999,
+      startDate: "20-06-2026",
+      endDate: "20-07-2026",
+      planDuration: "1 Month"
+    };
+
+    axios.get.mockImplementation((url) => {
+      if (url.includes("getPlans")) {
+        return Promise.resolve({ data: mockPlansData });
+      }
+      if (url.includes("checkWalletBalance")) {
+        return Promise.resolve({ data: { message: { RemainingBalance: 100 } } });
+      }
+      if (url.includes("sellersubscription")) {
+        return Promise.resolve({ data: { message: { orders: [mockActiveSubscription] } } });
+      }
+      return Promise.reject(new Error("Unknown GET URL"));
+    });
+
+    render(
+      <MemoryRouter>
+        <GrowPlanPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      const bottomBtn = screen.getByRole("button", { name: "Current Plan" });
+      expect(bottomBtn).toBeInTheDocument();
+      expect(bottomBtn).toBeDisabled();
+    });
+
+    const entCard = screen.getByText("Enterprise").closest(".plan-card");
+    fireEvent.click(entCard);
+    const bottomBtn = screen.getByRole("button", { name: "Upgrade Plan" });
+    expect(bottomBtn).toBeInTheDocument();
+    expect(bottomBtn).not.toBeDisabled();
   });
 });

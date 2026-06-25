@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import sellerService, { resolveWixImage } from "../../../services/sellerService";
+import sellerService, { resolveWixImage, resolveSellerId } from "../../../services/sellerService";
 
 const LIMIT = 10;
 
+const parseNumber = (val) => {
+  const parsed = Number(val);
+  return isNaN(parsed) ? 0 : Math.round(parsed);
+};
+
 export const useInventoryViewModel = (sellerId) => {
-  const [inventory, setInventory] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const inventory = inventoryItems;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -14,10 +20,20 @@ export const useInventoryViewModel = (sellerId) => {
   
   // Pagination and filter states
   const [page, setPage] = useState(1);
+  const currentPage = page;
+  const setCurrentPage = setPage;
+
   const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("in_stock"); // default to In Stock tab
 
+  // Batch update states
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
+
   const debounceRef = useRef(null);
+  const isRefetchingRef = useRef(false);
 
   // Debounced search handler
   const handleSearchChange = (val) => {
@@ -33,72 +49,94 @@ export const useInventoryViewModel = (sellerId) => {
   const loadInventory = useCallback(async (signal = null) => {
     setLoading(true);
     setError(null);
-    const url = `https://haatza.com/_functions/sellerproductInventory?sellerId=${sellerId}&page=${page}&searchText=${search}`;
-    console.log("[Inventory] sellerId", sellerId);
-    console.log("[Inventory] Fetch URL", url);
+    const isDev = process.env.NODE_ENV !== "production";
+    const resolvedSellerId = sellerId || resolveSellerId();
+    if (isDev) {
+      console.log("[InventoryPage] Seller ID", resolvedSellerId);
+      console.log("[InventoryPage] API Params", { sellerId: resolvedSellerId, page, searchText: search });
+    }
     try {
       const response = await sellerService.getSellerProductInventory({ 
-        sellerId, 
+        sellerId: resolvedSellerId, 
         page, 
         searchText: search, 
         signal 
       });
       
-      console.log("[Inventory] Raw Response", response);
+      const inventoryItemsResponse = response?.inventoryItems || [];
+      const totalItemsVal = Number(response?.totalItems || 0);
+      const currentPageVal = Number(response?.currentPage || page);
+      const totalPagesVal = Number(response?.totalPages || 1);
 
-      const items = response?.inventoryItems || [];
-      const totalItemsVal = response?.totalItems ?? 0;
+      const rows = inventoryItemsResponse.flatMap((item) => {
+        const variants = Array.isArray(item.variants) && item.variants.length
+          ? item.variants
+          : [{
+              variantId: item.variantId || item.id || "",
+              quantity: parseNumber(item.stock !== undefined ? item.stock : (item.quantity !== undefined ? item.quantity : 0)),
+              inStock: item.inStock !== undefined ? item.inStock : (item.stock > 0),
+              variant: item.variant || "Standard"
+            }];
 
-      console.log("[Inventory] inventoryItems count", items.length);
-      console.log("[Inventory] totalItems", totalItemsVal);
+        return variants.map((variant) => {
+          const originalQuantity = parseNumber(
+            variant?.quantity ??
+            variant?.stock?.quantity ??
+            variant?.stock ??
+            0
+          );
 
-      setTotalItems(totalItemsVal);
-
-      // Map backend fields safely to frontend schema
-      const mappedItems = [];
-      items.forEach((item, index) => {
-        if (!item || typeof item !== "object") return;
-        
-        const pId = item.productId || item.externalId || item.id || item.productId || "";
-        const pName = item.productName || item.name || item.title || "Unnamed Product";
-        
-        const media = item.image || item.productImage || item.imageUrl || (Array.isArray(item.media) ? item.media[0] : item.media) || "";
-        const pImg = resolveWixImage(media) || media || "";
-
-        const variantName = item.variant || item.size || item.variantName || item.options?.size || "Standard";
-        const sku = item.sku || "";
-        
-        const stock = Number(
-          item.stock !== undefined
-            ? item.stock
-            : (item.quantity !== undefined
-                ? item.quantity
-                : (item.currentStock !== undefined
-                    ? item.currentStock
-                    : (item.inventory !== undefined ? item.inventory : 0)))
-        );
-
-        const id = item.id || item.variantId || item.variant_id || item._id || `inv-${index}-${Date.now()}`;
-
-        mappedItems.push({
-          id,
-          productId: pId,
-          name: pName,
-          variant: variantName,
-          sku,
-          stock,
-          image: pImg,
+          return {
+            rowId: `${item.productId || item.externalId || "prod"}-${variant.variantId || "default"}`,
+            id: (item.variants && item.variants.length) 
+              ? `${item.productId}-${variant.variantId || "default"}`
+              : (item.id || `${item.productId}-${variant.variantId || "default"}`),
+            productId: item.productId || item.externalId || "-",
+            externalId: item.externalId || "-",
+            productName: item.productName || "-",
+            image: resolveWixImage(item.mainMedia) || resolveWixImage(item.image) || item.mainMedia || item.image || "",
+            variantId: variant.variantId || "-",
+            originalQuantity,
+            editedQuantity: originalQuantity,
+            inStock: Boolean(variant?.inStock ?? variant?.stock?.inStock),
+            stockStatus:
+              originalQuantity <= 0 ? "Out of Stock" :
+              originalQuantity <= 5 ? "Low Stock" :
+              "In Stock",
+              
+            // Legacy / UI properties
+            name: item.productName || item.name || "-",
+            variant: variant.variant || variant.variantId || "Standard",
+            stock: originalQuantity,
+            status: originalQuantity <= 0 ? "Out of Stock" :
+                    originalQuantity <= 5 ? "Low Stock" :
+                    "In Stock"
+          };
         });
       });
 
-      setInventory(mappedItems);
+      if (isDev) {
+        if (isRefetchingRef.current) {
+          console.log("[InventoryPage] Refetch Response", response);
+          isRefetchingRef.current = false;
+        } else {
+          console.log("[InventoryPage] Raw API Response", response);
+        }
+        console.log("[InventoryPage] inventoryItems", response?.inventoryItems);
+        console.log("[InventoryPage] mappedRows", rows);
+      }
+
+      setInventoryItems(rows);
+      setTotalItems(totalItemsVal);
+      setCurrentPage(currentPageVal);
+      setTotalPages(totalPagesVal);
     } catch (err) {
       if (err.name === "CanceledError" || err.name === "AbortError" || err.message === "canceled") {
         return; // Request was aborted, ignore error setting
       }
       console.error("[Inventory] Error", err);
       setError("Unable to load inventory. Please try again.");
-      setInventory([]);
+      setInventoryItems([]);
       setTotalItems(0);
     } finally {
       // Only set loading false if not aborted
@@ -128,53 +166,112 @@ export const useInventoryViewModel = (sellerId) => {
     };
   }, []);
 
-  // Calculate stats dynamically based on the current dataset
-  const inStockCount = useMemo(() => inventory.filter((item) => item.stock > 0).length, [inventory]);
-  const outOfStockCount = useMemo(() => inventory.filter((item) => item.stock === 0).length, [inventory]);
+  // Compute pending changed rows
+  const changedRows = useMemo(() => {
+    return inventoryItems.filter((row) => row.editedQuantity !== row.originalQuantity);
+  }, [inventoryItems]);
 
-  // Handle immediate increment
-  const handleIncrement = async (id) => {
-    const item = inventory.find((x) => x.id === id);
-    if (!item) return;
-
-    // Optimistically increment stock locally
-    setInventory((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, stock: x.stock + 1 } : x))
-    );
-
-    try {
-      setError(null);
-      await sellerService.incrementInventory(sellerId, item.productId, item.id, 1);
-    } catch (err) {
-      console.error("[useInventoryViewModel] Increment failed:", err);
-      setError(err.message || "Failed to increment stock.");
-      // Rollback on failure
-      setInventory((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, stock: Math.max(0, x.stock - 1) } : x))
-      );
+  useEffect(() => {
+    const isDev = process.env.NODE_ENV !== "production";
+    if (isDev && changedRows.length > 0) {
+      console.log("[InventoryPage] Changed Rows detected:", changedRows);
     }
+  }, [changedRows]);
+
+  const totalProduct = useMemo(() => {
+    return new Set(changedRows.map((row) => row.productId)).size;
+  }, [changedRows]);
+
+  const totalVariant = changedRows.length;
+
+  // Calculate stats dynamically based on the current dataset
+  const inStockCount = useMemo(() => inventoryItems.filter((item) => item.originalQuantity > 0 || item.inStock).length, [inventoryItems]);
+  const outOfStockCount = useMemo(() => inventoryItems.filter((item) => !(item.originalQuantity > 0 || item.inStock)).length, [inventoryItems]);
+
+  // Handle local-only increment
+  const handleIncrement = (rowId) => {
+    setInventoryItems((prev) =>
+      prev.map((item) =>
+        item.rowId === rowId || item.id === rowId
+          ? { ...item, editedQuantity: item.editedQuantity + 1 }
+          : item
+      )
+    );
   };
 
-  // Handle immediate decrement
-  const handleDecrement = async (id) => {
-    const item = inventory.find((x) => x.id === id);
-    if (!item || item.stock <= 0) return;
-
-    // Optimistically decrement stock locally
-    setInventory((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, stock: Math.max(0, x.stock - 1) } : x))
+  // Handle local-only decrement
+  const handleDecrement = (rowId) => {
+    setInventoryItems((prev) =>
+      prev.map((item) =>
+        (item.rowId === rowId || item.id === rowId) && item.editedQuantity > 0
+          ? { ...item, editedQuantity: Math.max(0, item.editedQuantity - 1) }
+          : item
+      )
     );
+  };
+
+  // Handle Batch update submission
+  const handleUpdateInventory = async () => {
+    setUpdating(true);
+    setError(null);
+    const isDev = process.env.NODE_ENV !== "production";
+    const resolvedSellerId = sellerId || resolveSellerId();
+
+    if (isDev) {
+      console.log("[InventoryPage] Original Rows", inventoryItems.map(r => ({ rowId: r.rowId, quantity: r.originalQuantity })));
+      console.log("[InventoryPage] Edited Rows", inventoryItems.map(r => ({ rowId: r.rowId, quantity: r.editedQuantity })));
+      console.log("[InventoryPage] Changed Rows", changedRows);
+      console.log("[InventoryPage] Update Summary", { totalProduct, totalVariant });
+    }
 
     try {
-      setError(null);
-      await sellerService.decrementInventory(sellerId, item.productId, item.id, 1);
+      const promises = changedRows.map(async (row) => {
+        const diff = Math.abs(row.editedQuantity - row.originalQuantity);
+        if (diff === 0) return;
+
+        const targetVariantId = row.variantId && row.variantId !== "-" ? row.variantId : row.id;
+        
+        if (row.editedQuantity > row.originalQuantity) {
+          if (isDev) {
+            console.log("[InventoryPage] Increment Payload", {
+              sellerId: resolvedSellerId,
+              productId: row.productId,
+              variantId: targetVariantId,
+              quantity: diff
+            });
+          }
+          const res = await sellerService.incrementInventory(resolvedSellerId, row.productId, targetVariantId, diff);
+          if (isDev) {
+            console.log("[InventoryPage] Update Response", res);
+          }
+        } else {
+          if (isDev) {
+            console.log("[InventoryPage] Decrement Payload", {
+              sellerId: resolvedSellerId,
+              productId: row.productId,
+              variantId: targetVariantId,
+              quantity: diff
+            });
+          }
+          const res = await sellerService.decrementInventory(resolvedSellerId, row.productId, targetVariantId, diff);
+          if (isDev) {
+            console.log("[InventoryPage] Update Response", res);
+          }
+        }
+      });
+
+      await Promise.all(promises);
+
+      // Successfully updated all changes
+      setSuccessMessage("Inventory updated successfully.");
+      isRefetchingRef.current = true;
+      setShowConfirmation(false);
+      await loadInventory();
     } catch (err) {
-      console.error("[useInventoryViewModel] Decrement failed:", err);
-      setError(err.message || "Failed to decrement stock.");
-      // Rollback on failure
-      setInventory((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, stock: x.stock + 1 } : x))
-      );
+      console.error("[useInventoryViewModel] Batch update failed:", err);
+      setError(err.message || "Failed to update some inventory items.");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -189,13 +286,13 @@ export const useInventoryViewModel = (sellerId) => {
 
   // Filter items based on dropdown filters and tab selection
   const filteredItems = useMemo(() => {
-    return inventory.filter((item) => {
+    return inventoryItems.filter((item) => {
       // 1. Status filter
       let matchesStatus = true;
       if (statusFilter === "in_stock") {
-        matchesStatus = item.stock > 0;
+        matchesStatus = item.originalQuantity > 0 || item.inStock;
       } else if (statusFilter === "out_of_stock") {
-        matchesStatus = item.stock === 0;
+        matchesStatus = !(item.originalQuantity > 0 || item.inStock);
       }
 
       // 2. Local search filter (product name, variant/size)
@@ -209,9 +306,7 @@ export const useInventoryViewModel = (sellerId) => {
 
       return matchesStatus && matchesSearch;
     });
-  }, [inventory, statusFilter, searchRaw]);
-
-  const totalPages = Math.ceil(totalItems / LIMIT);
+  }, [inventoryItems, statusFilter, searchRaw]);
 
   return {
     inventory,
@@ -233,5 +328,16 @@ export const useInventoryViewModel = (sellerId) => {
     totalPages,
     totalItems,
     limit: LIMIT,
+    
+    // Batch updates
+    changedRows,
+    showConfirmation,
+    setShowConfirmation,
+    updating,
+    successMessage,
+    setSuccessMessage,
+    handleUpdateInventory,
+    totalProduct,
+    totalVariant
   };
 };

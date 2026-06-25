@@ -28,6 +28,16 @@ const InventoryPage = () => {
     totalPages,
     totalItems,
     limit,
+    // Batch updates
+    changedRows,
+    showConfirmation,
+    setShowConfirmation,
+    updating,
+    successMessage,
+    setSuccessMessage,
+    handleUpdateInventory,
+    totalProduct,
+    totalVariant
   } = useInventoryViewModel(sellerId);
 
   // Helper helper to switch status tab & reset to page 1
@@ -41,7 +51,7 @@ const InventoryPage = () => {
   const toItem = Math.min(page * limit, totalItems);
 
   return (
-    <div className="inv-page-root">
+    <div className={`inv-page-root ${changedRows.length > 0 ? "has-update-bar" : ""}`}>
       <div className="inv-page-header">
         <h1>Inventory</h1>
         <p>Manage product variants, stock levels, and availability.</p>
@@ -52,6 +62,14 @@ const InventoryPage = () => {
         <div className="inv-alert-banner">
           <span>{error}</span>
           <button type="button" className="inv-alert-close" onClick={() => setError(null)}>&times;</button>
+        </div>
+      )}
+
+      {/* Success Alert Banner */}
+      {successMessage && (
+        <div className="inv-alert-banner" style={{ background: "#ecfdf5", borderColor: "#a7f3d0", color: "#065f46" }}>
+          <span>{successMessage}</span>
+          <button type="button" className="inv-alert-close" onClick={() => setSuccessMessage(null)} style={{ color: "#047857" }}>&times;</button>
         </div>
       )}
 
@@ -125,10 +143,54 @@ const InventoryPage = () => {
                   </div>
                 </div>
               )}
+
             </>
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal Popup */}
+      {showConfirmation && (
+        <div className="inv-modal-overlay">
+          <div className="inv-modal">
+            <h3 className="inv-modal-title">Update Inventory</h3>
+            <p className="inv-modal-message">Are you sure you want to update the inventory?</p>
+            <div className="inv-modal-summary">
+              Total Product: {totalProduct}, Total Variant: {totalVariant}
+            </div>
+            <div className="inv-modal-actions">
+              <button
+                type="button"
+                className="inv-btn-cancel"
+                onClick={() => setShowConfirmation(false)}
+                disabled={updating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="inv-btn-ok"
+                onClick={handleUpdateInventory}
+                disabled={updating}
+              >
+                {updating ? "Updating..." : "OK"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Viewport-fixed Update Inventory Bar */}
+      {changedRows.length > 0 && (
+        <div className="inventory-update-bar">
+          <button
+            type="button"
+            onClick={() => setShowConfirmation(true)}
+          >
+            Update Inventory
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -534,3 +534,48 @@
 @keyframes grow-spin {
   to { transform: rotate(360deg); }
 }
+
+.current-plan-expired-text {
+  color: #ef4444; /* red color */
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.current-plan-active-text {
+  color: #10b981; /* green color */
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.plan-card-action {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.btn-plan-action {
+  width: 100%;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-plan-action:hover {
+  background: #1d4ed8;
+}
+
+.btn-plan-action:active {
+  transform: scale(0.99);
+}

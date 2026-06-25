@@ -117,7 +117,7 @@ describe("GrowPlanPage - API Parameter Integration Tests", () => {
     });
 
     // Continue to Review
-    fireEvent.click(screen.getByText("Continue").closest("button"));
+    fireEvent.click(screen.getByText("Select Plan").closest("button"));
 
     // Click Subscribe Now
     fireEvent.click(screen.getByText("Subscribe Now"));

@@ -3,7 +3,12 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CreateCampaignPage from "../CreateCampaignPage";
 import { resolveSellerId } from "../../../utils/sellerSession";
-import { advertisementService, checkWalletBalance } from "../../../services/sellerService";
+import {
+  advertisementService,
+  checkWalletBalance,
+  sellerService,
+  extractCampaignProducts
+} from "../../../services/sellerService";
 
 jest.mock("../../../utils/sellerSession", () => ({
   resolveSellerId: jest.fn()
@@ -12,10 +17,17 @@ jest.mock("../../../utils/sellerSession", () => ({
 jest.mock("../../../services/sellerService", () => ({
   advertisementService: {
     fetchSellerCampaignProduct: jest.fn(),
-    createCampaign: jest.fn()
+    createCampaign: jest.fn(),
+    getCampaignProducts: jest.fn(),
+    getSellerCampaignProducts: jest.fn()
+  },
+  sellerService: {
+    updateSellerCampaign: jest.fn(),
+    getUserProfile: jest.fn()
   },
   checkWalletBalance: jest.fn(),
-  resolveWixImage: (img) => img
+  resolveWixImage: (img) => img,
+  extractCampaignProducts: jest.fn((res) => res?.products || res || [])
 }));
 
 describe("CreateCampaignPage", () => {
@@ -30,6 +42,17 @@ describe("CreateCampaignPage", () => {
 
   test("Step 1 and Step 2 flow works", async () => {
     advertisementService.fetchSellerCampaignProduct.mockResolvedValue({
+      status: "success",
+      products: [
+        {
+          productId: "p1",
+          name: "Test T-Shirt",
+          price: 500,
+          status: "In Stock"
+        }
+      ]
+    });
+    advertisementService.getSellerCampaignProducts.mockResolvedValue({
       status: "success",
       products: [
         {
@@ -77,9 +100,18 @@ describe("CreateCampaignPage", () => {
     // checkboxes[0] is select all, checkboxes[1] is Test T-Shirt
     fireEvent.click(checkboxes[1]);
 
-    // Submit campaign
-    const submitBtn = screen.getByText("Submit");
-    fireEvent.click(submitBtn);
+    // Click Continue on Choose Products page to go to Step 3 Review
+    const continueBtnStep2 = screen.getByText("Continue");
+    fireEvent.click(continueBtnStep2);
+
+    // Verify step transition to Review Campaign
+    await waitFor(() => {
+      expect(screen.getByText("Review Campaign")).toBeInTheDocument();
+    });
+
+    // Submit campaign on step 3 via Publish
+    const publishBtn = screen.getByText("Publish");
+    fireEvent.click(publishBtn);
 
     await waitFor(() => {
       expect(advertisementService.createCampaign).toHaveBeenCalledWith(
@@ -88,6 +120,129 @@ describe("CreateCampaignPage", () => {
           campaignType: "Smart",
           selectedProducts: ["p1"],
           dailyBudget: 250 // default preset option
+        })
+      );
+    });
+  });
+
+  test("Edit campaign flow works", async () => {
+    const mockEditCampaign = {
+      campaignId: "CAMP1001",
+      tableId: "CAMP1001-table",
+      campaignName: "Promo Campaign",
+      title: "Promo Campaign",
+      campaignType: "Smart",
+      startDateTime: "2026-06-20 09:00 AM",
+      endDateTime: "2026-06-27 10:00 PM",
+      cpcGoal: 5,
+      dailyBudget: 550,
+      status: "Active"
+    };
+
+    advertisementService.getCampaignProducts.mockResolvedValue({
+      status: "success",
+      products: [
+        {
+          productId: "p1",
+          productName: "Campaign Product 1",
+          price: 300,
+          status: "In Stock"
+        }
+      ]
+    });
+
+    advertisementService.fetchSellerCampaignProduct.mockResolvedValue({
+      status: "success",
+      products: [
+        {
+          productId: "p1",
+          productName: "Campaign Product 1",
+          price: 300,
+          status: "In Stock"
+        },
+        {
+          productId: "p2",
+          productName: "Available Product 2",
+          price: 400,
+          status: "In Stock"
+        }
+      ]
+    });
+    advertisementService.getSellerCampaignProducts.mockResolvedValue({
+      status: "success",
+      products: [
+        {
+          productId: "p1",
+          productName: "Campaign Product 1",
+          price: 300,
+          status: "In Stock"
+        },
+        {
+          productId: "p2",
+          productName: "Available Product 2",
+          price: 400,
+          status: "In Stock"
+        }
+      ]
+    });
+
+    sellerService.updateSellerCampaign.mockResolvedValue({ status: "success" });
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/edit", state: { editCampaign: mockEditCampaign } }]}>
+        <CreateCampaignPage />
+      </MemoryRouter>
+    );
+
+    // Verify wallet balance
+    await waitFor(() => {
+      expect(screen.getByText("₹150.50")).toBeInTheDocument();
+    });
+
+    // Name should be pre-populated
+    const nameInput = screen.getByPlaceholderText("Enter campaign name");
+    expect(nameInput.value).toBe("Promo Campaign");
+
+    // Click continue to Step 2
+    const continueBtn = screen.getByText("Continue");
+    fireEvent.click(continueBtn);
+
+    // Verify step transition to Choose the Products
+    await waitFor(() => {
+      expect(screen.getByText("Choose the Products")).toBeInTheDocument();
+    });
+
+    // Verify both Campaign Product 1 is shown
+    await waitFor(() => {
+      expect(screen.getByText("Campaign Product 1")).toBeInTheDocument();
+    });
+
+    // Checkboxes should be loaded. The first checkbox is 'select all', others are products.
+    const checkboxes = screen.getAllByRole("checkbox");
+    // Verify that Campaign Product 1 checkbox is checked (since it belongs to the campaign)
+    expect(checkboxes[1]).toBeChecked();
+
+    // Click continue to Step 3 Review
+    const continueBtnStep2 = screen.getByText("Continue");
+    fireEvent.click(continueBtnStep2);
+
+    await waitFor(() => {
+      expect(screen.getByText("Review Campaign")).toBeInTheDocument();
+    });
+
+    // In edit mode, the submit button is "Update Campaign"
+    const updateBtn = screen.getByText("Update Campaign");
+    fireEvent.click(updateBtn);
+
+    await waitFor(() => {
+      expect(sellerService.updateSellerCampaign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sellerId: "HS1380",
+          campaignId: "CAMP1001",
+          tableId: "CAMP1001-table",
+          title: "Promo Campaign",
+          dailyBudget: 550,
+          productId: ["p1"]
         })
       );
     });

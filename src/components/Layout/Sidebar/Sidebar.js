@@ -14,7 +14,6 @@ const KEY_TO_ROUTE = {
   settlements: "/settlements",
   help: "/help",
   advertisement: "/advertisement",
-  haatzup: "/haatzup",
   growplan: "/growplan",
   productinsight: "/productinsight",
   warehouse: "/warehouse",
@@ -101,10 +100,6 @@ const NAV_SECTIONS_FALLBACK = [
       {
         key: "advertisement", label: "Advertisement",
         icon: createIcon("M23 7H1v10h22V7z", "0 0 24 24", React.createElement("path", { d: "M16 21V3a2 2 0 00-2-2h-4a2 2 0 00-2 2v18" })),
-      },
-      {
-        key: "haatzup", label: "HaatzUp",
-        icon: createIcon("M23 7l-7 5 7 5V7z", "0 0 24 24", React.createElement("rect", { x: "1", y: "5", width: "15", height: "14", rx: "2", ry: "2" })),
       },
       {
         key: "growplan", label: "Grow Plan",
