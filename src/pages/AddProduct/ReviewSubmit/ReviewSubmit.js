@@ -363,6 +363,7 @@ const isUpdate = !!(isEditMode && !isDuplicateMode && tableId && !isViewMode);
       deliveryCharges: formData.deliveryCharge === "yes",
       shippingWeight:  Math.min(parseFloat(formData.shippingWeight) || 0, 5000),
       sellerPinCode:   resolveSellerPinCode(),
+      sellerId:        getCachedSellerId(),
     };
 
     fetchSettlementSummary(settlementParams)

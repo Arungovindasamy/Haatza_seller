@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
@@ -15,15 +15,12 @@ import {
 } from "lucide-react";
 import { getSellerId } from "../../utils/sellerSession";
 import { sellerService } from "../../services/sellerService";
-import { useAuth } from "../../context/AuthContext";
 import "./DashboardPage.css";
 
 const DashboardPage = () => {
-  const { user } = useAuth();
   const sellerId = getSellerId();
-  const sellerEmail = user?.email || localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail") || "";
+  const sellerEmail = localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail") || "";
   const navigate = useNavigate();
-  console.log("Dashboard Seller Data:", user);
 
   // State for data
   const [profile, setProfile] = useState(null);
@@ -42,19 +39,28 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchingRef = useRef(false);
+
   const loadDashboardData = useCallback(async () => {
-    if (!sellerId || !sellerEmail) {
-      setError("Seller session not found. Please login again.");
-      setLoading(false);
+    const isValidId = sellerId && sellerId.startsWith("HS") && !sellerId.includes("@");
+
+    if (!isValidId || !sellerEmail) {
+      if (!sellerEmail) {
+        setError("Seller session not found. Please login again.");
+        setLoading(false);
+      }
       return;
     }
+
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
 
     setLoading(true);
     setError(null);
 
     try {
       const results = await Promise.allSettled([
-        sellerService.getUserProfile(sellerEmail, sellerId),
+        sellerService.getUserProfile(sellerEmail),
         sellerService.getSellerNewOrders(sellerId),
         sellerService.getSellerConfirmedOrdersCount(sellerId),
         sellerService.checkWalletBalance(sellerId),
@@ -62,22 +68,12 @@ const DashboardPage = () => {
         sellerService.getAdvertisementSummary(sellerId),
         sellerService.getTopSellingProducts(sellerId),
         sellerService.getProductStats(sellerId),
-        sellerService.getSellerPayments(sellerId)
+        sellerService.getSellerPayments({ email: sellerEmail })
       ]);
 
       // 1. Profile
       if (results[0].status === "fulfilled") {
-        const res = results[0].value;
-        let p = res?.message || res?.data || res || {};
-        if (Array.isArray(p)) {
-          p = p[0] || {};
-        }
-        const actualData = (typeof p === "string") ? (res?.data || res || {}) : p;
-        let sellerObj = actualData.seller || actualData.data || actualData;
-        if (Array.isArray(sellerObj)) {
-          sellerObj = sellerObj[0] || {};
-        }
-        setProfile(sellerObj);
+        setProfile(results[0].value?.message || results[0].value?.data || results[0].value);
       }
 
       // 2. New Orders
@@ -148,6 +144,7 @@ const DashboardPage = () => {
       console.error("[DashboardPage] Fetch data failed:", err);
       setError("Failed to load dashboard statistics. Please verify your connection.");
     } finally {
+      fetchingRef.current = false;
       setLoading(false);
     }
   }, [sellerId, sellerEmail]);
@@ -155,6 +152,17 @@ const DashboardPage = () => {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
+
+  useEffect(() => {
+    const isValidId = sellerId && sellerId.startsWith("HS") && !sellerId.includes("@");
+    if (!isValidId && sellerEmail) {
+      const timer = setTimeout(() => {
+        setError("Seller session not found. Please login again.");
+        setLoading(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [sellerId, sellerEmail]);
 
   if (loading) {
     return (
@@ -181,21 +189,13 @@ const DashboardPage = () => {
     );
   }
 
-  const sellerName =
-    user?.nickname ||
-    user?.firstName ||
-    user?.name ||
-    user?.fullName ||
-    user?.companyName ||
-    "";
-
-  const firstName = sellerName ? sellerName.trim().split(/\s+/)[0] : "";
+  const sellerName = profile?.sellerName || profile?.companyName || "Seller";
 
   return (
     <div className="dashboard-page-container">
       <div className="dashboard-header-section">
         <div>
-          <h1 className="dashboard-greeting">Welcome back{firstName ? `, ${firstName}` : ""}! ✨</h1>
+          <h1 className="dashboard-greeting">Welcome back, {sellerName}! ✨</h1>
           <p className="dashboard-subtitle">Here is what is happening with your store today.</p>
         </div>
         <button className="btn-refresh-dashboard" onClick={loadDashboardData} title="Refresh dashboard data">

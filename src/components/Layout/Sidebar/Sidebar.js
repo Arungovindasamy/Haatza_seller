@@ -2,42 +2,46 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactDOM from "react-dom";
 import { sellerService } from "../../../services/sellerService";
-import { getSellerId } from "../../../utils/sellerSession";
-import { useAuth } from "../../../context/AuthContext";
-import LogoutConfirmModal from "../../common/LogoutConfirmModal/LogoutConfirmModal";
+import { getSellerId, resolveSellerEmail } from "../../../utils/sellerSession";
 import "./Sidebar.css";
 
 const KEY_TO_ROUTE = {
-  dashboard:       "/dashboard",
-  orders:          "/dashboard/orders",
-  returns:         "/dashboard/returns",
-  listing:         "/dashboard/listing",
-  inventory:       "/dashboard/inventory",
-  settlements:     "/dashboard/settlements",
-  help:            "/dashboard/help",
-  advertisement:   "/dashboard/advertisement",
-  haatzup:         "/dashboard/haatzaup",
-  growplan:        "/dashboard/growplan",
-  productinsight:  "/dashboard/productinsight",
-  warehouse:       "/dashboard/warehouse",
-  influencer:      "/dashboard/influencer",
-  growthcentral:   "/dashboard/growthcentral",
-  qualityinsights: "/dashboard/qualityinsights",
-  referandearn:    "/refer-earn",
-  settings:        "/dashboard/settings",
+  dashboard: "/dashboard",
+  orders: "/orders",
+  returns: "/return-exchange",
+  listing: "/listing",
+  inventory: "/inventory",
+  settlements: "/settlements",
+  help: "/help",
+  advertisement: "/advertisement",
+  growplan: "/growplan",
+  productinsight: "/productinsight",
+  warehouse: "/warehouse",
+  influencer: "/influencer",
+  growthcentral: "/growthcentral",
+  qualityinsights: "/qualityinsights",
+  referandearn: "/referandearn",
+  settings: "/settings",
 };
- 
+
 /* Reverse map — lets active highlight follow the URL automatically */
 const ROUTE_TO_KEY = Object.fromEntries(
   Object.entries(KEY_TO_ROUTE).map(([k, v]) => [v, k])
 );
 
-/* ─────────────────────────────────────────────────────────────
-   NAV DATA
-   ───────────────────────────────────────────────────────────── */
-const NAV_SECTIONS = [
+// Menu icons helpers
+const createIcon = (d, viewBox = "0 0 24 24", extra = null) => {
+  return React.createElement(
+    "svg",
+    { width: "20", height: "20", viewBox, fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
+    React.createElement("path", { d }),
+    extra
+  );
+};
+
+const NAV_SECTIONS_FALLBACK = [
   {
-    heading: "Manage Business",
+    heading: "MANAGE BUSINESS",
     items: [
       {
         key: "orders", label: "Orders", badge: "12",
@@ -95,75 +99,38 @@ const NAV_SECTIONS = [
     items: [
       {
         key: "advertisement", label: "Advertisement",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }),
-          React.createElement("path", { d: "M19.07 4.93a10 10 0 010 14.14" }),
-          React.createElement("path", { d: "M15.54 8.46a5 5 0 010 7.07" })
-        ),
+        icon: createIcon("M23 7H1v10h22V7z", "0 0 24 24", React.createElement("path", { d: "M16 21V3a2 2 0 00-2-2h-4a2 2 0 00-2 2v18" })),
       },
       {
-        key: "haatzup", label: "HaatzUp",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polyline", { points: "23 6 13.5 15.5 8.5 10.5 1 18" }),
-          React.createElement("polyline", { points: "17 6 23 6 23 12" })
-        ),
-      },
-      {
-        key: "growplan", label: "Grow Plan", badge: "Pro", badgeType: "pro",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("circle", { cx: "12", cy: "12", r: "10" }),
-          React.createElement("path", { d: "M12 8l4 4-4 4-4-4 4-4z" })
-        ),
+        key: "growplan", label: "Grow Plan",
+        icon: createIcon("M18 20V10M12 20V4M6 20v-6"),
       },
       {
         key: "productinsight", label: "Product Insight",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("line", { x1: "18", y1: "20", x2: "18", y2: "10" }),
-          React.createElement("line", { x1: "12", y1: "20", x2: "12", y2: "4" }),
-          React.createElement("line", { x1: "6", y1: "20", x2: "6", y2: "14" })
-        ),
+        icon: createIcon("M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", "0 0 24 24", React.createElement("circle", { cx: "12", cy: "12", r: "3" })),
       },
       {
         key: "warehouse", label: "Warehouse",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("path", { d: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" }),
-          React.createElement("polyline", { points: "9 22 9 12 15 12 15 22" })
-        ),
+        icon: createIcon("M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"),
       },
       {
         key: "influencer", label: "Influencer Branding",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("path", { d: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" }),
-          React.createElement("circle", { cx: "9", cy: "7", r: "4" }),
-          React.createElement("path", { d: "M23 21v-2a4 4 0 00-3-3.87" }),
-          React.createElement("path", { d: "M16 3.13a4 4 0 010 7.75" })
-        ),
+        icon: createIcon("M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "0 0 24 24", React.createElement("circle", { cx: "9", cy: "7", r: "4" })),
       },
       {
         key: "growthcentral", label: "Growth Central",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polyline", { points: "22 12 18 12 15 21 9 3 6 12 2 12" })
-        ),
+        icon: createIcon("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "0 0 24 24", React.createElement("path", { d: "M16.2 7.8l-2.2 6.4-6.4 2.2 2.2-6.4 6.4-2.2z" })),
       },
       {
         key: "qualityinsights", label: "Quality Insights",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("circle", { cx: "12", cy: "8", r: "6" }),
-          React.createElement("path", { d: "M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" })
-        ),
+        icon: createIcon("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "0 0 24 24", React.createElement("path", { d: "M12 8v4M12 16h.01" })),
       },
       {
         key: "referandearn", label: "Refer & Earn",
-        icon: React.createElement("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polyline", { points: "20 12 20 22 4 22 4 12" }),
-          React.createElement("rect", { x: "2", y: "7", width: "20", height: "5" }),
-          React.createElement("line", { x1: "12", y1: "22", x2: "12", y2: "7" }),
-          React.createElement("path", { d: "M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" }),
-          React.createElement("path", { d: "M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" })
-        ),
-      },
+        icon: createIcon("M22 7H2v14h20V7z", "0 0 24 24", React.createElement("path", { d: "M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16" })),
+      }
     ],
-  },
+  }
 ];
 
 const DASHBOARD_ITEM = {
@@ -195,9 +162,6 @@ const BOTTOM_ITEMS = [
   },
 ];
 
-/* ─────────────────────────────────────────────────────────────
-   ICONS
-   ───────────────────────────────────────────────────────────── */
 const ChevronLeftIcon = () =>
   React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
     React.createElement("polyline", { points: "15 18 9 12 15 6" })
@@ -208,24 +172,20 @@ const ChevronRightIcon = () =>
     React.createElement("polyline", { points: "9 18 15 12 9 6" })
   );
 
-/* ─────────────────────────────────────────────────────────────
-   SIDEBAR TOOLTIP
-   ───────────────────────────────────────────────────────────── */
 function SidebarTooltip({ label, anchorRect, visible }) {
   const tooltipRef = useRef(null);
-  const [coords, setCoords]   = useState({ top: 0, left: 0 });
-  const [ready,  setReady]    = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!anchorRect) { setReady(false); return; }
 
     const GAP = 14;
     const estimatedH = tooltipRef.current ? tooltipRef.current.offsetHeight : 36;
-
-    const rawTop  = anchorRect.top  + anchorRect.height / 2 - estimatedH / 2;
+    const rawTop = anchorRect.top + anchorRect.height / 2 - estimatedH / 2;
     const rawLeft = anchorRect.right + GAP;
-
     const maxTop = window.innerHeight - estimatedH - 8;
+
     setCoords({ top: Math.max(8, Math.min(rawTop, maxTop)), left: rawLeft });
     setReady(true);
   }, [anchorRect]);
@@ -236,9 +196,9 @@ function SidebarTooltip({ label, anchorRect, visible }) {
     React.createElement(
       "div",
       {
-        ref:          tooltipRef,
-        className:    ["sidebar-tooltip", visible && ready ? "sidebar-tooltip--visible" : ""].filter(Boolean).join(" "),
-        style:        { top: coords.top, left: coords.left },
+        ref: tooltipRef,
+        className: ["sidebar-tooltip", visible && ready ? "sidebar-tooltip--visible" : ""].filter(Boolean).join(" "),
+        style: { top: coords.top, left: coords.left },
         "aria-hidden": "true",
       },
       React.createElement("span", { className: "sidebar-tooltip__caret", "aria-hidden": "true" }),
@@ -248,9 +208,6 @@ function SidebarTooltip({ label, anchorRect, visible }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   NAV ITEM
-   ───────────────────────────────────────────────────────────── */
 function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipHide, tooltipActiveKey }) {
   const btnRef = useRef(null);
   const isTouchDevice = useRef(false);
@@ -271,6 +228,8 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
 
   const handleTouchStart = useCallback((e) => {
     if (!isCollapsed || !onTooltipShow || !isTouchDevice.current) return;
+    e.preventDefault();
+
     const rect = btnRef.current?.getBoundingClientRect();
     if (rect) {
       onTooltipShow(item.label, rect, item.key);
@@ -286,57 +245,43 @@ function NavItem({ item, active, onClick, isCollapsed, onTooltipShow, onTooltipH
   return React.createElement(
     "button",
     {
-      ref:          btnRef,
-      className:    [
+      ref: btnRef,
+      className: [
         "nav-item",
-        active      ? "nav-item--active"    : "",
-        item.danger ? "nav-item--danger"    : "",
+        active ? "nav-item--active" : "",
+        item.danger ? "nav-item--danger" : "",
         isCollapsed ? "nav-item--icon-only" : "",
         tooltipActiveKey === item.key ? "nav-item--tooltip-active" : "",
       ].filter(Boolean).join(" "),
-      onClick:      (e) => {
+      onClick: (e) => {
         e.stopPropagation();
         if (onClick) onClick(item.key);
       },
       onMouseEnter: handleMouseEnter,
       onMouseLeave: handleMouseLeave,
       onTouchStart: handleTouchStart,
-      onTouchEnd:   handleTouchEnd,
+      onTouchEnd: handleTouchEnd,
       "aria-label": item.label,
     },
     React.createElement("span", { className: "nav-item__icon" }, item.icon),
     !isCollapsed && React.createElement("span", { className: "nav-item__label" }, item.label),
     !isCollapsed && item.badge &&
-      React.createElement("span", {
-        className: `nav-item__badge${item.badgeType === "pro" ? " nav-item__badge--pro" : ""}`,
-      }, item.badge)
+    React.createElement("span", {
+      className: `nav-item__badge${item.badgeType === "pro" ? " nav-item__badge--pro" : ""}`,
+    }, item.badge)
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SELLER PROFILE
-   ───────────────────────────────────────────────────────────── */
-function SellerProfile({ sellerName = "", sellerEmail = "", sellerPhone = "", sellerId = "", onProfileClick, isCollapsed }) {
-  const initials = sellerName
+function SellerProfile({ sellerName = "", sellerEmail = "", onProfileClick, isCollapsed }) {
+  const displayCompany = sellerName || "Seller";
+  const displayEmail = sellerEmail || "";
+
+  const initials = displayCompany
     .split(" ")
-    .map(n => n[0])
+    .map((n) => n ? n[0] : "")
     .join("")
     .toUpperCase()
-    .slice(0, 2) || "";
-
-  const profileInfo = !isCollapsed
-    ? React.createElement(
-        "div",
-        { className: "profile__info" },
-        React.createElement("p", { className: "profile__name" }, sellerName || ""),
-        React.createElement(
-          "div",
-          { className: "profile__email-container" },
-          React.createElement("p", { className: "profile__email" }, sellerEmail || "seller@haatza.com"),
-          
-        )
-      )
-    : null;
+    .slice(0, 2) || "??";
 
   return React.createElement(
     "div",
@@ -345,100 +290,88 @@ function SellerProfile({ sellerName = "", sellerEmail = "", sellerPhone = "", se
         "sidebar__profile",
         isCollapsed ? "sidebar__profile--mini" : "",
       ].filter(Boolean).join(" "),
-      title: isCollapsed ? sellerName : undefined,
+      onClick: onProfileClick,
+      title: isCollapsed ? displayCompany : undefined,
+      style: { cursor: "pointer" }
     },
-    React.createElement(
-      "div",
-      { className: "profile__avatar" },
+    React.createElement("div", { className: "profile__avatar" },
       React.createElement("span", { className: "profile__avatar-initials" }, initials)
     ),
-    profileInfo
+    !isCollapsed && React.createElement(
+      "div", { className: "profile__info" },
+      React.createElement("p", { className: "profile__name" }, displayCompany),
+      React.createElement("p", { className: "profile__email" }, displayEmail)
+    ),
+    !isCollapsed && React.createElement("div", { className: "profile__arrow" },
+      React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
+        React.createElement("polyline", { points: "9 18 15 12 9 6" })
+      )
+    )
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SIDEBAR
-   ───────────────────────────────────────────────────────────── */
 function Sidebar({
-  sellerName     = "",
-  sellerEmail    = "",
-  sellerPhone    = "",
-  sellerId       = "",
-  onProfileClick = () => {},
+  sellerName = "",
+  sellerEmail = "",
+  onProfileClick = () => { },
   onCollapseChange,
 }) {
-  const { user, logout } = useAuth();
-  const seller = user || {};
-
-  const sellerNameResolved =
-    seller.name ||
-    seller.fullName ||
-    seller.sellerName ||
-    seller.userName ||
-    seller.firstName ||
-    seller.nickname ||
-    sellerName ||
-    "";
-  const sellerEmailResolved = seller.email || sellerEmail || "";
-  const sellerPhoneResolved = seller.phone || sellerPhone || "";
-  const sellerIdResolved = seller.sellerId || sellerId || "";
-
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(
     () => typeof window !== "undefined" && window.innerWidth <= 768
   );
 
-  /* ── NEW: Logout confirmation modal state ─────────────────── */
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [menuSections, setMenuSections] = useState(NAV_SECTIONS_FALLBACK);
 
-  const activeKey = (() => {
-    const path = location.pathname;
+  const sellerId = getSellerId();
 
-    if (
-      path.includes("/referearn") ||
-      path.includes("/referandearn") ||
-      path.includes("/refer-earn") ||
-      location.state?.type === "referral" ||
-      location.state?.type === "faq"
-    ) {
-      return "referandearn";
-    }
-    if (path.includes("/orders"))      return "orders";
-    if (path.includes("/returns") || path.includes("/return-exchange")) return "returns";
-    if (path.includes("/listing") || path.includes("/my-listings") || path.includes("/inprogress-listings")) return "listing";
-    if (path.includes("/inventory"))   return "inventory";
-    if (path.includes("/settlements") || path.includes("/payments")) return "settlements";
-    if (path.includes("/settings"))    return "settings";
-    if (path.includes("/help"))        return "help";
-    if (path.includes("/advertisement")) return "advertisement";
-    if (path.includes("/haatzaup") || path.includes("/haatzup")) return "haatzup";
-    if (path.includes("/growplan"))    return "growplan";
-    if (path.includes("/product-insight") || path.includes("/productinsight")) return "productinsight";
-    if (path.includes("/warehouse"))   return "warehouse";
-    if (path.includes("/influencer"))  return "influencer";
-    if (path.includes("/growthcentral")) return "growthcentral";
-    if (path.includes("/qualityinsights")) return "qualityinsights";
-    if (path === "/dashboard" || path === "/" || path.startsWith("/dashboard/")) return "dashboard";
-    return ROUTE_TO_KEY[path] || "";
-  })();
+  const onCollapseChangeRef = useRef(onCollapseChange);
+  useEffect(() => {
+    onCollapseChangeRef.current = onCollapseChange;
+  });
 
-  /* ── Dynamic badge counts ─────────────────────────────────── */
-  const [menuSections, setMenuSections] = useState(NAV_SECTIONS);
-  const activeSellerId = sellerIdResolved || getSellerId();
+  const fetchingRef = useRef(false);
+  const walletFetchedRef = useRef(false);
+  const lastWalletBalanceRef = useRef(0);
 
   useEffect(() => {
-    if (!activeSellerId) return;
+    walletFetchedRef.current = false;
+    lastWalletBalanceRef.current = 0;
+  }, [sellerId]);
 
-    const fetchCounts = async () => {
+  useEffect(() => {
+    if (!sellerId) return;
+
+    let active = true;
+    const abortController = new AbortController();
+
+    const fetchCounts = async (forceWalletFetch = false) => {
+      if (fetchingRef.current) return;
+      fetchingRef.current = true;
       try {
+        const emailId = sellerEmail || resolveSellerEmail() || "";
+        const now = new Date();
+        const fromDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          .toISOString()
+          .split("T")[0];
+        const toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          .toISOString()
+          .split("T")[0];
+
+        const walletPromise = (!walletFetchedRef.current || forceWalletFetch)
+          ? sellerService.checkWalletBalance(sellerId)
+          : Promise.resolve({ status: "success", message: { RemainingBalance: lastWalletBalanceRef.current } });
+
         const [ordersRes, ticketsRes, notifRes, walletRes, campaignRes] = await Promise.allSettled([
-          sellerService.getSellerNewOrders(activeSellerId),
-          sellerService.getTickets(activeSellerId),
-          sellerService.getNotifications(activeSellerId),
-          sellerService.checkWalletBalance(activeSellerId),
-          sellerService.getAdvertisementSummary(activeSellerId),
+          sellerService.getSellerNewOrders(sellerId),
+          sellerService.getSellerTickets({ sellerId, emailId, fromDate, toDate }),
+          sellerService.getNotifications(sellerId),
+          walletPromise,
+          sellerService.getAdvertisementSummary(sellerId)
         ]);
+
+        if (!active) return;
 
         let ordersCount = 0;
         if (ordersRes.status === "fulfilled") {
@@ -466,8 +399,13 @@ function Sidebar({
 
         let walletLabel = "";
         if (walletRes.status === "fulfilled") {
-          const bal = Number(walletRes.value?.message?.RemainingBalance || walletRes.value?.RemainingBalance || 0);
-          walletLabel = `₹${bal.toFixed(2)}`;
+          const val = walletRes.value;
+          if (val && val.status !== "error") {
+            const bal = Number(val.message?.RemainingBalance || val.RemainingBalance || 0);
+            lastWalletBalanceRef.current = bal;
+            walletFetchedRef.current = true;
+          }
+          walletLabel = `₹${lastWalletBalanceRef.current.toFixed(2)}`;
         }
 
         let activeCampaigns = 0;
@@ -476,35 +414,79 @@ function Sidebar({
           activeCampaigns = summary.activeCampaigns || summary.ActiveCampaignsCount || 0;
         }
 
-        setMenuSections(prevSections =>
-          prevSections.map(section => ({
-            ...section,
-            items: section.items.map(item => {
-              if (item.key === "orders")        return { ...item, badge: ordersCount > 0      ? String(ordersCount)         : undefined };
-              if (item.key === "help")          return { ...item, badge: ticketsCount > 0     ? String(ticketsCount)        : undefined };
-              if (item.key === "notifications") return { ...item, badge: unreadNotifCount > 0 ? String(unreadNotifCount)    : undefined };
-              if (item.key === "wallet")        return { ...item, badge: walletLabel           ? walletLabel                : undefined };
-              if (item.key === "advertisement") return { ...item, badge: activeCampaigns > 0  ? `${activeCampaigns} Active` : undefined };
-              return item;
-            }),
-          }))
-        );
+        setMenuSections(prevSections => {
+          return prevSections.map(section => {
+            return {
+              ...section,
+              items: section.items.map(item => {
+                if (item.key === "orders") {
+                  return { ...item, badge: ordersCount > 0 ? String(ordersCount) : undefined };
+                }
+                if (item.key === "help") {
+                  return { ...item, badge: ticketsCount > 0 ? String(ticketsCount) : undefined };
+                }
+                if (item.key === "notifications") {
+                  return { ...item, badge: unreadNotifCount > 0 ? String(unreadNotifCount) : undefined };
+                }
+                if (item.key === "wallet") {
+                  return { ...item, badge: walletLabel || undefined };
+                }
+                if (item.key === "advertisement") {
+                  return { ...item, badge: activeCampaigns > 0 ? `${activeCampaigns} Active` : undefined };
+                }
+                return item;
+              })
+            };
+          });
+        });
+
       } catch (err) {
-        console.warn("[Sidebar] Error updating dynamic counts:", err);
+        if (active) {
+          console.warn("[Sidebar] Error updating dynamic counts:", err);
+        }
+      } finally {
+        fetchingRef.current = false;
       }
     };
 
-    fetchCounts();
-    const interval = setInterval(fetchCounts, 30000);
-    return () => clearInterval(interval);
-  }, [activeSellerId]);
+    fetchCounts(true);
+    const interval = setInterval(() => {
+      fetchCounts(false);
+    }, 60000);
 
-  /* ── Tooltip state ────────────────────────────────────────── */
-  const [tooltip, setTooltip] = useState({ 
-    label: "", 
-    anchorRect: null, 
+    const handleWalletUpdate = () => {
+      fetchCounts(true);
+    };
+
+    window.addEventListener("walletUpdate", handleWalletUpdate);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener("walletUpdate", handleWalletUpdate);
+      abortController.abort();
+    };
+  }, [sellerId, sellerEmail]);
+
+  const activeKey = (() => {
+    const path = location.pathname;
+
+    if (
+      path.includes("/listing") ||
+      path.includes("/my-listings") ||
+      path.includes("/inprogress-listings")
+    ) {
+      return "listing";
+    }
+
+    return ROUTE_TO_KEY[path] ?? "dashboard";
+  })();
+
+  const [tooltip, setTooltip] = useState({
+    label: "",
+    anchorRect: null,
     visible: false,
-    activeKey: null 
+    activeKey: null
   });
   const hideTimer = useRef(null);
   const isTouchDevice = useRef(false);
@@ -568,6 +550,7 @@ function Sidebar({
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tooltip.visible, tooltip.activeKey, isCollapsed, isTouchDevice]);
 
   useEffect(() => {
@@ -577,12 +560,11 @@ function Sidebar({
     }
   }, [isCollapsed]);
 
-  /* ── Breakpoint listener ──────────────────────────────────── */
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
-    const onBreakpoint = (e) => { 
+    const onBreakpoint = (e) => {
+      setIsCollapsed(e.matches);
       if (e.matches) {
-        setIsCollapsed(true);
         setTooltip({ label: "", anchorRect: null, visible: false, activeKey: null });
       }
     };
@@ -591,61 +573,40 @@ function Sidebar({
   }, []);
 
   useEffect(() => {
-    if (typeof onCollapseChange === "function") onCollapseChange(isCollapsed);
-  }, [isCollapsed, onCollapseChange]);
-
-  const handleToggle    = useCallback(() => setIsCollapsed(prev => !prev), []);
-
-  /* ─────────────────────────────────────────────────────────
-     handleItemClick — "logout" now opens the confirmation
-     modal instead of immediately running logout().
-     All other nav items behave exactly as before.
-  ───────────────────────────────────────────────────────── */
-  const handleItemClick = useCallback((key) => {
-    if (key === "logout") {
-      setShowLogoutModal(true); // open confirmation popup
-      return;
+    if (typeof onCollapseChangeRef.current === "function") {
+      onCollapseChangeRef.current(isCollapsed);
     }
+  }, [isCollapsed]);
+
+  const handleToggle = useCallback(() => setIsCollapsed(prev => !prev), []);
+  const handleItemClick = useCallback((key) => {
     const route = KEY_TO_ROUTE[key];
     if (route) navigate(route);
   }, [navigate]);
 
-  /* ── Confirmed logout: run existing auth logout + navigate ─ */
-  const handleLogoutConfirm = useCallback(() => {
-    setShowLogoutModal(false);
-    logout();
-    navigate("/signup");
-  }, [logout, navigate]);
-
-  /* ── Cancelled: just close the popup ─────────────────────── */
-  const handleLogoutCancel = useCallback(() => {
-    setShowLogoutModal(false);
-  }, []);
-
-  const handleProfileClick = useCallback((e) => { 
-    e.stopPropagation(); 
-    onProfileClick(); 
+  const handleProfileClick = useCallback((e) => {
+    e.stopPropagation();
+    onProfileClick();
   }, [onProfileClick]);
 
   const getToggleLeft = useCallback(() => {
     if (isCollapsed) return "72px";
     const w = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width").trim();
-    return w || "320px";
+    return w || "380px";
   }, [isCollapsed]);
 
   const tooltipCallbacks = isCollapsed
-    ? { 
-        onTooltipShow: handleTooltipShow, 
-        onTooltipHide: handleTooltipHide,
-        tooltipActiveKey: tooltip.activeKey
-      }
+    ? {
+      onTooltipShow: handleTooltipShow,
+      onTooltipHide: handleTooltipHide,
+      tooltipActiveKey: tooltip.activeKey
+    }
     : {};
 
-  /* ── Sidebar content ──────────────────────────────────────── */
   const content = React.createElement(
     React.Fragment, null,
 
-    React.createElement(SellerProfile, { sellerName: sellerNameResolved, sellerEmail: sellerEmailResolved, sellerPhone: sellerPhoneResolved, sellerId: activeSellerId, onProfileClick: handleProfileClick, isCollapsed }),
+    React.createElement(SellerProfile, { sellerName, sellerEmail, onProfileClick: handleProfileClick, isCollapsed }),
 
     React.createElement("div", { className: "sidebar__divider" }),
 
@@ -677,30 +638,20 @@ function Sidebar({
   return React.createElement(
     React.Fragment, null,
 
-    /* ── Logout confirmation modal ────────────────────────── */
-    React.createElement(LogoutConfirmModal, {
-      isOpen: showLogoutModal,
-      onYes:  handleLogoutConfirm,
-      onNo:   handleLogoutCancel,
-    }),
-
-    /* ── Floating tooltip portal ──────────────────────────── */
     React.createElement(SidebarTooltip, tooltip),
 
-    /* ── Toggle button ────────────────────────────────────── */
     React.createElement(
       "button",
       {
-        className:    "sidebar__external-toggle",
-        style:        { left: getToggleLeft() },
-        onClick:      handleToggle,
+        className: "sidebar__external-toggle",
+        style: { left: getToggleLeft() },
+        onClick: handleToggle,
         "aria-label": isCollapsed ? "Expand sidebar" : "Collapse sidebar",
-        title:        isCollapsed ? "Expand sidebar" : "Collapse sidebar",
+        title: isCollapsed ? "Expand sidebar" : "Collapse sidebar",
       },
       isCollapsed ? React.createElement(ChevronRightIcon) : React.createElement(ChevronLeftIcon)
     ),
 
-    /* ── Sidebar shell ────────────────────────────────────── */
     React.createElement(
       "aside",
       { className: ["sidebar", isCollapsed ? "sidebar--mini" : ""].filter(Boolean).join(" ") },

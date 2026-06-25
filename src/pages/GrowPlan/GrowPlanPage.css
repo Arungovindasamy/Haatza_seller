@@ -1,0 +1,581 @@
+/* GrowPlanPage.css */
+
+.grow-plan-container {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  padding-bottom: 40px; /* Desktop bottom padding */
+}
+
+@media (max-width: 768px) {
+  .grow-plan-container {
+    padding-bottom: 100px; /* Mobile bottom padding so content is not hidden by sticky button */
+  }
+}
+
+/* Breadcrumb & Navigation */
+.grow-plan-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.grow-plan-breadcrumb span.active {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+/* Header Section */
+.grow-plan-header {
+  margin-bottom: 32px;
+  text-align: center;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.grow-plan-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.grow-plan-subtitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0 0 8px 0;
+}
+
+.grow-plan-description {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Current Subscription Banner */
+.current-subscription-banner {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border: 1px solid #7dd3fc;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.current-subscription-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #0369a1;
+  font-weight: 700;
+}
+
+.current-subscription-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #0e7490;
+}
+
+/* Plans List Layout (Stacked vertically with wider width and proper spacing) */
+.plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Proper gap between cards */
+  max-width: 1000px; /* Wider/full-looking max-width */
+  margin: 0 auto 40px auto;
+  width: 100%;
+}
+
+/* Plan Card styling (Light Grey Background as requested) */
+.plan-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.plan-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.plan-card.selected {
+  border-color: #2563eb;
+  border-width: 2px;
+  background-color: #f8fafc;
+}
+
+/* Plan Card Header */
+.plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.plan-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Inline badge next to name */
+.recommended-badge-inline {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.plan-selector-radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.plan-card.selected .plan-selector-radio {
+  border-color: #2563eb;
+}
+
+.plan-selector-inner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  display: none;
+}
+
+.plan-card.selected .plan-selector-inner {
+  display: block;
+}
+
+.plan-price-row {
+  margin-bottom: 0px;
+  padding-bottom: 0px;
+  border-bottom: none;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.plan-card.selected .plan-price-row {
+  margin-bottom: 16px;
+}
+
+.plan-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.plan-duration {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.plan-divider {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 16px 0;
+  width: 100%;
+}
+
+.plan-features-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 16px;
+}
+
+.plan-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.feature-check-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* See More / See Less Button in Card */
+.plan-expanded-details .btn-see-more-toggle {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.plan-expanded-details .btn-see-more-toggle:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Footer marketing content (Wider width aligned with plans container) */
+.grow-plan-footer-content {
+  max-width: 1000px;
+  margin: 40px auto 40px auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.footer-section h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.footer-section p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0;
+}
+
+/* Continue indicator action bar (relative/in-flow on desktop, sticky on mobile) */
+.plans-action-bar {
+  position: relative;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+  margin: 40px auto 0 auto;
+  max-width: 1000px;
+  width: 100%;
+  border-top: none;
+}
+
+.plans-action-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-continue {
+  width: 100%;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-continue:hover {
+  background: #1d4ed8;
+}
+
+.btn-continue:active {
+  transform: scale(0.99);
+}
+
+.btn-continue:disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .plans-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    padding: 16px 24px;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    border-top: 1px solid #e2e8f0;
+    z-index: 100;
+    max-width: none;
+    margin: 0;
+  }
+  .plans-action-content {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+}
+
+/* Confirmation Modal overlay details */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.confirm-modal-container {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+.confirm-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.confirm-modal-payable-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 24px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-confirm-yes {
+  flex: 1;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-confirm-yes:hover {
+  background: #1d4ed8;
+}
+
+.btn-confirm-no {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-confirm-no:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Success Card details */
+.subscription-success-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+  margin: 40px auto;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.success-check-badge {
+  width: 64px;
+  height: 64px;
+  background: #ecfdf5;
+  color: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+}
+
+.subscription-success-card h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.subscription-success-card p {
+  color: #475569;
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.btn-back-dashboard {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-back-dashboard:hover {
+  background: #1d4ed8;
+}
+
+/* Error Banner details */
+.grow-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.grow-error-banner button {
+  background: none;
+  border: none;
+  color: #b91c1c;
+  font-size: 18px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.grow-loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.grow-loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: grow-spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes grow-spin {
+  to { transform: rotate(360deg); }
+}
+
+.current-plan-expired-text {
+  color: #ef4444; /* red color */
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.current-plan-active-text {
+  color: #10b981; /* green color */
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.plan-card-action {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.btn-plan-action {
+  width: 100%;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-plan-action:hover {
+  background: #1d4ed8;
+}
+
+.btn-plan-action:active {
+  transform: scale(0.99);
+}

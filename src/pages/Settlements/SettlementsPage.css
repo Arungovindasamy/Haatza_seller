@@ -1,3 +1,10 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SETTLEMENTS PAGE — CSS
+   Updated: Removed quick-preset chip styles; uses calendar-based date picker.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Page Root & Header ──────────────────────────────────────────────────── */
+
 .settlements-page-root {
   padding: 24px;
   min-height: 100vh;
@@ -23,7 +30,8 @@
   margin: 0;
 }
 
-/* Alert Banner */
+/* ─── Alert Banner ────────────────────────────────────────────────────────── */
+
 .settlements-alert-banner {
   display: flex;
   align-items: center;
@@ -56,20 +64,22 @@
   opacity: 1;
 }
 
-/* Card & Body */
+/* ─── Card & Body ─────────────────────────────────────────────────────────── */
+
 .settlements-card {
   background: #fff;
   border-radius: 14px;
   border: 1px solid #f1f3f6;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  overflow: visible; /* To allow floating datepicker popover */
+  overflow: visible;
 }
 
 .settlements-card-body {
   padding: 24px;
 }
 
-/* Filters Row */
+/* ─── Filters Row ─────────────────────────────────────────────────────────── */
+
 .settlements-filters-row {
   display: flex;
   align-items: center;
@@ -113,7 +123,8 @@
   box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.1);
 }
 
-/* Date filter container and dropdown button */
+/* ─── Date Filter Trigger Button ──────────────────────────────────────────── */
+
 .date-filter-container {
   position: relative;
 }
@@ -148,20 +159,116 @@
   transform: rotate(180deg);
 }
 
-/* Datepicker Popover */
-.datepicker-popover {
-  position: absolute;
-  top: calc(100% + 8px);
+/* ─── Datepicker Modal Overlay ────────────────────────────────────────────── */
+
+.datepicker-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   right: 0;
-  z-index: 100;
-  width: 290px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  padding: 16px;
+  bottom: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  z-index: 2200;
   box-sizing: border-box;
 }
+
+@media (max-width: 640px) {
+  .datepicker-modal-overlay {
+    align-items: flex-end;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 641px) {
+  .datepicker-modal-overlay {
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ─── Datepicker Bottom Sheet / Card ──────────────────────────────────────── */
+
+.datepicker-bottom-sheet {
+  background: #fff;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Mobile — bottom sheet */
+@media (max-width: 640px) {
+  .datepicker-bottom-sheet {
+    width: 100%;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 24px 20px 20px;
+    animation: datepicker-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+}
+
+/* Desktop — centered modal */
+@media (min-width: 641px) {
+  .datepicker-bottom-sheet {
+    width: 400px;
+    border-radius: 16px;
+    padding: 24px;
+    animation: datepicker-fade-scale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+@keyframes datepicker-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes datepicker-fade-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Datepicker Title ────────────────────────────────────────────────────── */
+
+.datepicker-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* ─── Calendar Wrapper ────────────────────────────────────────────────────── */
+
+.datepicker-calendar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 8px;
+}
+
+/* ─── Datepicker Header (nav arrows + month/year labels) ──────────────────── */
 
 .datepicker-header {
   display: flex;
@@ -170,29 +277,54 @@
   margin-bottom: 14px;
 }
 
-.calendar-month-year {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1f2937;
+/* Clickable month + year group */
+.calendar-month-year-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
+.calendar-month-btn,
+.calendar-year-btn {
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.calendar-month-btn:hover,
+.calendar-year-btn:hover {
+  background: #eef2ff;
+  color: #2962ff;
+}
+
+/* Nav arrows */
 .btn-nav-cal {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: none;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   cursor: pointer;
   color: #4b5563;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-nav-cal:hover {
   background: #f3f4f6;
 }
+
+/* ─── Weekday Labels ──────────────────────────────────────────────────────── */
 
 .calendar-weekdays {
   display: grid;
@@ -205,51 +337,44 @@
   font-size: 11px;
   font-weight: 600;
   color: #9ca3af;
+  padding: 4px 0;
 }
+
+/* ─── Day Grid ────────────────────────────────────────────────────────────── */
 
 .calendar-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 3px;
   margin-bottom: 12px;
 }
 
 .calendar-day-empty {
-  height: 32px;
+  height: 34px;
 }
 
 .calendar-day-btn {
-  height: 32px;
+  height: 34px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 6px;
+  border-radius: 50%;
   font-size: 13px;
   font-weight: 500;
   color: #374151;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.12s, color 0.12s;
 }
 
-.calendar-day-btn:hover {
+.calendar-day-btn:hover:not(.calendar-day-btn--disabled) {
   background: #f3f4f6;
 }
 
-.calendar-day-btn--active {
-  background: #2962ff !important;
-  color: #fff !important;
-  font-weight: 700;
-}
-
-.calendar-day-btn--range-start {
-  background: #2962ff !important;
-  color: #fff !important;
-  border-radius: 50% !important;
-  font-weight: 700;
-}
-
+/* Start / end — filled blue circle */
+.calendar-day-btn--range-start,
 .calendar-day-btn--range-end {
   background: #2962ff !important;
   color: #fff !important;
@@ -257,35 +382,191 @@
   font-weight: 700;
 }
 
+/* In-range — light blue band, no border-radius */
 .calendar-day-btn--in-range {
-  background: rgba(41, 98, 255, 0.12) !important;
+  background: rgba(41, 98, 255, 0.1) !important;
   border-radius: 0 !important;
   color: #2962ff !important;
 }
 
-.datepicker-footer {
-  border-top: 1px solid #f3f4f6;
-  padding-top: 12px;
+/* Today — blue ring */
+.calendar-day-btn--today {
+  border: 1.5px solid #2962ff !important;
+  font-weight: 700;
 }
 
-.datepicker-btn-confirm {
-  width: 100%;
-  padding: 9px;
-  background: #2962ff;
-  border: none;
-  color: #fff;
-  border-radius: 6px;
-  font-size: 13.5px;
+/* Disabled / future dates */
+.calendar-day-btn--disabled {
+  color: #d1d5db !important;
+  cursor: not-allowed;
+  background: none !important;
+}
+
+/* ─── Selected Range Hint Strip ───────────────────────────────────────────── */
+
+.datepicker-range-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 0 4px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.range-hint-chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  border: 1.5px solid #e5e7eb;
+  color: #9ca3af;
+  background: #f9fafb;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.range-hint-chip.filled {
+  border-color: #2962ff;
+  color: #2962ff;
+  background: #eef2ff;
   font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.datepicker-btn-confirm:hover {
+.range-hint-dash {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* ─── Month Picker View ───────────────────────────────────────────────────── */
+
+.datepicker-month-view,
+.datepicker-year-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.month-grid,
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.month-grid-btn,
+.year-grid-btn {
+  padding: 13px 6px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.month-grid-btn:hover:not(.month-grid-btn--disabled),
+.year-grid-btn:hover:not(.year-grid-btn--disabled) {
+  background: #eef2ff;
+  border-color: #2962ff;
+  color: #2962ff;
+}
+
+/* Selected — blue outline pill */
+.month-grid-btn--selected,
+.year-grid-btn--selected {
+  background: #fff !important;
+  border-color: #2962ff !important;
+  color: #2962ff !important;
+  font-weight: 700;
+}
+
+/* Disabled / future */
+.month-grid-btn--disabled,
+.year-grid-btn--disabled {
+  color: #d1d5db !important;
+  background: #f9fafb !important;
+  border-color: #f0f0f0 !important;
+  cursor: not-allowed;
+}
+
+/* ─── Footer Action Buttons ───────────────────────────────────────────────── */
+
+.datepicker-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 16px;
+  margin-top: 4px;
+}
+
+.datepicker-btn-cancel,
+.datepicker-btn-clear,
+.datepicker-btn-apply {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.datepicker-btn-cancel {
+  background: none;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+}
+
+.datepicker-btn-cancel:hover {
+  background: #f9fafb;
+  border-color: #c4c6cc;
+}
+
+.datepicker-btn-clear {
+  background: none;
+  border: none;
+  color: #ef4444;
+}
+
+.datepicker-btn-clear:hover {
+  background: #fef2f2;
+}
+
+.datepicker-btn-apply {
+  background: #2962ff;
+  color: #fff;
+  flex-grow: 1;
+}
+
+.datepicker-btn-apply:hover:not(:disabled) {
   background: #1565c0;
 }
 
-/* Refresh Button */
+.datepicker-btn-apply:disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Mobile — Confirm button full-width */
+@media (max-width: 640px) {
+  .datepicker-footer-actions {
+    flex-wrap: wrap;
+  }
+
+  .datepicker-btn-apply {
+    width: 100%;
+    order: -1;
+    flex-grow: unset;
+  }
+}
+
+/* ─── Refresh Button ──────────────────────────────────────────────────────── */
+
 .btn-refresh {
   display: flex;
   align-items: center;
@@ -306,7 +587,8 @@
   color: #111827;
 }
 
-/* Tabs */
+/* ─── Tabs ────────────────────────────────────────────────────────────────── */
+
 .settlements-tabs {
   display: flex;
   gap: 24px;
@@ -335,7 +617,8 @@
   color: #2962ff !important;
 }
 
-/* Loading & Empty State */
+/* ─── Loading & Empty State ───────────────────────────────────────────────── */
+
 .settlements-loading {
   display: flex;
   flex-direction: column;
@@ -356,8 +639,13 @@
 }
 
 @keyframes settlements-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .settlements-loading p {
@@ -396,7 +684,8 @@
   line-height: 1.5;
 }
 
-/* Table styling */
+/* ─── Table ───────────────────────────────────────────────────────────────── */
+
 .settlements-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -431,7 +720,8 @@
   background-color: #fafbfc;
 }
 
-/* Badge */
+/* ─── Status Badge ────────────────────────────────────────────────────────── */
+
 .settlement-status-badge {
   display: inline-block;
   font-size: 12px;
@@ -442,7 +732,8 @@
   border-radius: 50px;
 }
 
-/* Buttons */
+/* ─── View Details Button ─────────────────────────────────────────────────── */
+
 .btn-view-details {
   background: none;
   border: 1px solid #2962ff;
@@ -460,13 +751,26 @@
   color: #fff;
 }
 
-/* Utility Helpers */
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-.text-gray-800 { color: #1f2937; }
-.text-emerald-600 { color: #059669; }
+/* ─── Utility Helpers ─────────────────────────────────────────────────────── */
 
-/* Modal overlay & card */
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-gray-800 {
+  color: #1f2937;
+}
+
+.text-emerald-600 {
+  color: #059669;
+}
+
+/* ─── Payment Detail Modal ────────────────────────────────────────────────── */
+
 .settlements-modal-overlay {
   position: fixed;
   top: 0;
@@ -487,15 +791,24 @@
   border-radius: 16px;
   width: 100%;
   max-width: 440px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   box-sizing: border-box;
   animation: settlements-modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes settlements-modal-in {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .settlements-modal-card .modal-header {
@@ -583,29 +896,30 @@
   font-weight: 800;
 }
 
-/* Tablet adjustments */
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
 @media (max-width: 640px) {
   .settlements-page-root {
     padding: 16px;
   }
-  
+
   .settlements-card-body {
     padding: 16px;
   }
-  
+
   .settlements-filters-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .search-bar-wrapper {
+
+  .settlements-page-root .search-bar-wrapper {
     max-width: none;
   }
-  
-  .date-filter-container, .datepicker-popover {
+
+  .date-filter-container {
     width: 100%;
   }
-  
+
   .btn-date-filter {
     width: 100%;
     justify-content: space-between;

@@ -8,7 +8,7 @@ import {
   getSellerCampaigns,
   getCampaignDetails,
   getCampaignSummary
-} from '../../services/sellerService';
+} from "../../services/sellerService";
 import "./WalletPage.css";
 
 const loadRazorpayScript = () => {
@@ -125,7 +125,7 @@ const WalletPage = () => {
 
         if (!email) return;
 
-        const profile = await getUserProfile(email, sellerId);
+        const profile = await getUserProfile(email);
         if (profile?.status === "success" || profile?.message) {
           setSellerProfile(profile.message);
         }
@@ -506,7 +506,7 @@ const WalletPage = () => {
         order_id: rzpOrderId,
         ...(rzpImage ? { image: rzpImage } : {}),
         prefill: {
-          name: sellerProfile?.sellerName || sellerProfile?.companyName || "",
+          name: sellerProfile?.sellerName || "Seller",
           email:
             sellerProfile?.email ||
             localStorage.getItem("userEmail") ||
@@ -582,7 +582,7 @@ const WalletPage = () => {
             const isVerified =
               verifyRes === true ||
               (verifyRes?.status === "success" &&
-               verifyRes?.message?.verified === true);
+                verifyRes?.message?.verified === true);
 
             if (!isVerified) {
               throw new Error("Payment verification failed. Wallet was not credited.");

@@ -1,28 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Save } from "lucide-react";
-import StockBadge from "./StockBadge";
-import QuantityStepper from "./QuantityStepper";
+import React from "react";
 import "./InventoryTable.css";
 
 const FALLBACK_IMG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' fill='%23f1f3f6' rx='8'/%3E%3Ctext x='30' y='35' text-anchor='middle' fill='%23b0b7c3' font-size='22'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E";
 
-const InventoryTableRow = ({ item, onSave }) => {
-  const [localQty, setLocalQty] = useState(item.stock);
-
-  // Sync state if item stock changes from elsewhere (e.g., refresh or bulk action)
-  useEffect(() => {
-    setLocalQty(item.stock);
-  }, [item.stock]);
-
-  const hasChanges = localQty !== item.stock;
-
-  const handleSave = () => {
-    onSave(item.id, localQty);
-  };
+const InventoryTableRow = ({ item, onIncrement, onDecrement }) => {
+  const isInStock = item.editedQuantity > 0;
+  const showMinusDisabled = item.editedQuantity <= 0;
 
   return (
-    <tr className={hasChanges ? "row-has-changes" : ""}>
+    <tr>
       <td>
         <img
           className="inv-img"
@@ -35,35 +22,74 @@ const InventoryTableRow = ({ item, onSave }) => {
         />
       </td>
       <td>
-        <span className="inv-product-name" title={item.name}>
-          {item.name}
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span className="inv-product-name" title={item.name} style={{ fontWeight: "600", color: "#1a1d23" }}>
+            {item.name}
+          </span>
+          <span style={{ 
+            fontSize: "13px", 
+            fontWeight: "700", 
+            color: isInStock ? "#10b981" : "#ef4444" 
+          }}>
+            {isInStock ? `InStock : ${item.editedQuantity}` : `OutStock : 0`}
+          </span>
+        </div>
       </td>
-      <td className="text-center font-semibold">{item.variant}</td>
-      <td className="inv-sku">{item.sku}</td>
-      <td className="inv-stock-cell font-bold">{item.stock}</td>
       <td>
-        <StockBadge stock={item.stock} />
-      </td>
-      <td>
-        <QuantityStepper value={localQty} onChange={setLocalQty} />
-      </td>
-      <td>
-        <button
-          type="button"
-          className={`inv-btn-save ${hasChanges ? "inv-btn-save--active" : ""}`}
-          onClick={handleSave}
-          disabled={!hasChanges}
-        >
-          <Save size={14} />
-          <span>Save</span>
-        </button>
+        <div className="qty-stepper" style={{ display: "inline-flex", alignItems: "center", gap: "12px", border: "1px solid #e5e7eb", borderRadius: "6px", padding: "4px 8px", background: "#fff" }}>
+          <button 
+            type="button" 
+            className="qty-btn" 
+            onClick={() => onDecrement(item.rowId || item.id)}
+            disabled={showMinusDisabled}
+            aria-label="Decrease quantity"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              border: "none",
+              background: "transparent",
+              cursor: showMinusDisabled ? "not-allowed" : "pointer",
+              color: showMinusDisabled ? "#9ca3af" : "#374151",
+              fontSize: "18px",
+              fontWeight: "600"
+            }}
+          >
+            &minus;
+          </button>
+          <span className="qty-value-label" style={{ minWidth: "32px", textAlign: "center", fontWeight: "600", fontSize: "14px", color: "#111827" }}>
+            {item.editedQuantity}
+          </span>
+          <button 
+            type="button" 
+            className="qty-btn" 
+            onClick={() => onIncrement(item.rowId || item.id)}
+            aria-label="Increase quantity"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#374151",
+              fontSize: "18px",
+              fontWeight: "600"
+            }}
+          >
+            &#43;
+          </button>
+        </div>
       </td>
     </tr>
   );
 };
 
-const InventoryTable = ({ items, onSaveQuantity }) => {
+const InventoryTable = ({ items, onIncrement, onDecrement }) => {
   return (
     <div className="inv-table-wrap">
       <table className="inv-table">
@@ -71,18 +97,13 @@ const InventoryTable = ({ items, onSaveQuantity }) => {
           <tr>
             <th>Image</th>
             <th>Product Name</th>
-            <th className="text-center">Variant</th>
-            <th>SKU</th>
             <th>Current Stock</th>
-            <th>Stock Status</th>
-            <th>Update Quantity</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan="8" className="inv-table-empty">
+              <td colSpan="3" className="inv-table-empty">
                 No inventory items found matching the filter criteria.
               </td>
             </tr>
@@ -91,7 +112,8 @@ const InventoryTable = ({ items, onSaveQuantity }) => {
               <InventoryTableRow
                 key={item.id}
                 item={item}
-                onSave={onSaveQuantity}
+                onIncrement={onIncrement}
+                onDecrement={onDecrement}
               />
             ))
           )}

@@ -1,41 +1,21 @@
-// DashboardLayout.js  (updated — added ReviewSubmitPage routes and AuthContext sync)
-import React, { useState, useEffect, useRef } from "react";
+// DashboardLayout.js  (updated — added ReviewSubmitPage routes)
+import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { sellerService } from "../../../services/sellerService";
 import { getSellerId } from "../../../utils/sellerSession";
-import { useAuth } from "../../../context/AuthContext";
 
-import HaatzaNavbar  from "../Navbar/Navbar";
-import Sidebar       from "../Sidebar/Sidebar";
+import HaatzaNavbar from "../Navbar/Navbar";
+import Sidebar from "../Sidebar/Sidebar";
 import "./DashboardLayout.css";
-
-// ─── Wix image helper ──────────────────────────────────────────────────────────
-const resolveLogoUrl = (url) => {
-  if (!url) return null;
-  const trimmed = String(url).trim();
-  if (!trimmed) return null;
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-    return trimmed;
-  }
-  if (trimmed.startsWith("wix:image://")) {
-    const noScheme = trimmed.replace(/^wix:image:\/\/(?:v1\/)?/, "");
-    const fileId = noScheme.split("/")[0].split("#")[0].split("?")[0];
-    if (fileId) return `https://static.wixstatic.com/media/${fileId}`;
-  }
-  if (trimmed.length > 4 && !trimmed.includes(" ")) {
-    return `https://static.wixstatic.com/media/${trimmed}`;
-  }
-  return trimmed;
-};
 
 // ─── Read the real seller email from auth sources ─────────────────────────────
 const resolveSellerEmail = (locationState) => {
   if (locationState?.email &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(locationState.email)) {
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(locationState.email)) {
     const e = locationState.email.trim().toLowerCase();
     console.log("[DashboardLayout] ✅ Email from location.state:", e);
     sessionStorage.setItem("pendingEmail", e);
-    localStorage.setItem("userEmail",      e);
+    localStorage.setItem("userEmail", e);
     return e;
   }
 
@@ -50,7 +30,7 @@ const resolveSellerEmail = (locationState) => {
   }
 
   const localKeys = ["userEmail", "email", "sellerEmail",
-                     "user", "authUser", "currentUser", "seller"];
+    "user", "authUser", "currentUser", "seller"];
   for (const key of localKeys) {
     const raw = localStorage.getItem(key);
     if (!raw) continue;
@@ -61,7 +41,7 @@ const resolveSellerEmail = (locationState) => {
     }
     try {
       const parsed = JSON.parse(raw);
-      const found  = parsed?.email || parsed?.userEmail || parsed?.sellerEmail;
+      const found = parsed?.email || parsed?.userEmail || parsed?.sellerEmail;
       if (found && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(found)) {
         const e = found.trim().toLowerCase();
         console.log(`[DashboardLayout] ✅ Email from localStorage[${key}].email:`, e);
@@ -75,217 +55,66 @@ const resolveSellerEmail = (locationState) => {
 };
 
 // ─── Seller display data ───────────────────────────────────────────────────────
-const useSellerDisplayData = (resolvedEmail, updateUser, currentUser) => {
+const useSellerDisplayData = (resolvedEmail) => {
+  const [seller, setSeller] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(resolvedEmail ? true : false);
-  const fetchedEmailRef = useRef("");
-
-  const updateUserRef = useRef(updateUser);
-  const currentUserRef = useRef(currentUser);
-
-  updateUserRef.current = updateUser;
-  currentUserRef.current = currentUser;
 
   useEffect(() => {
     if (!resolvedEmail) {
+      setSeller(null);
       setLoadingProfile(false);
       return;
     }
-
-    if (fetchedEmailRef.current === resolvedEmail && currentUserRef.current?.profileFetched) {
-      setLoadingProfile(false);
-      return;
-    }
-
-    fetchedEmailRef.current = resolvedEmail;
     setLoadingProfile(true);
-
-    const activeSellerId = currentUserRef.current?.sellerId || getSellerId();
-
-    // 1. Session Storage Details
-    const sessionData = {
-      sellerName: sessionStorage.getItem("sellerName") || "",
-      companyName: sessionStorage.getItem("companyName") || "",
-      phone: sessionStorage.getItem("sellerPhone") || "",
-      sellerId: sessionStorage.getItem("sellerId") || sessionStorage.getItem("__haatza_sellerId") || "",
-      email: sessionStorage.getItem("userEmail") || sessionStorage.getItem("pendingEmail") || "",
-      pincode: sessionStorage.getItem("sellerPinCode") || "",
-    };
-
-    // 2. Local Storage Details
-    const localStorageData = {
-      sellerName: localStorage.getItem("sellerName") || localStorage.getItem("sellerFullName") || localStorage.getItem("__haatza_sellerName") || "",
-      companyName: localStorage.getItem("companyName") || "",
-      phone: localStorage.getItem("sellerPhone") || "",
-      sellerId: localStorage.getItem("sellerId") || localStorage.getItem("__haatza_sellerId") || "",
-      email: localStorage.getItem("userEmail") || "",
-      pincode: localStorage.getItem("sellerPinCode") || "",
-    };
-
-    // 3. Registration / OTP response details
-    let parsedSellerData = {};
-    try {
-      const raw = localStorage.getItem("sellerData");
-      if (raw) parsedSellerData = JSON.parse(raw);
-    } catch {}
-
-    const authenticatedSeller = {
-      name: parsedSellerData.fullName || parsedSellerData.name || localStorageData.sellerName || sessionData.sellerName || currentUserRef.current?.name || "",
-      nickname: parsedSellerData.nickname || currentUserRef.current?.nickname || "",
-      firstName: parsedSellerData.firstName || "",
-      lastName: parsedSellerData.lastName || "",
-      companyName: parsedSellerData.companyName || localStorageData.companyName || sessionData.companyName || currentUserRef.current?.companyName || "",
-      email: parsedSellerData.email || localStorageData.email || sessionData.email || currentUserRef.current?.email || resolvedEmail || "",
-      phone: parsedSellerData.phone || localStorageData.phone || sessionData.phone || currentUserRef.current?.phone || "",
-      sellerId: parsedSellerData.sellerId || parsedSellerData.seller_id || localStorageData.sellerId || sessionData.sellerId || currentUserRef.current?.sellerId || "",
-      gstin: parsedSellerData.gstin || parsedSellerData.GSTIN || currentUserRef.current?.gstin || "",
-      GSTIN: parsedSellerData.GSTIN || parsedSellerData.gstin || currentUserRef.current?.GSTIN || "",
-      address: parsedSellerData.address || currentUserRef.current?.address || "",
-      pincode: parsedSellerData.pincode || localStorageData.pincode || sessionData.pincode || currentUserRef.current?.pincode || "",
-      logoUrl: parsedSellerData.logoUrl || currentUserRef.current?.logoUrl || "",
-      storageType: parsedSellerData.storageType || currentUserRef.current?.storageType || "",
-      status: parsedSellerData.status || currentUserRef.current?.status || "",
-    };
-
-    sellerService.getUserProfile(resolvedEmail, activeSellerId)
+    sellerService.getUserProfile(resolvedEmail)
       .then((res) => {
-        const profileResponse = res;
-        let p = res?.message || res?.data || res || {};
-        
-        // Task B - 6: Prevent unrelated profile records from overriding the authenticated seller identity
-        if (Array.isArray(p)) {
-          const matched = p.find(item => {
-            const itemEmail = item.email || item.sellerEmail || item.userEmail || "";
-            const itemId = item.sellerId || item.seller_id || item.uid || item.id || "";
-            return (
-              (resolvedEmail && itemEmail.toLowerCase().trim() === resolvedEmail.toLowerCase().trim()) ||
-              (activeSellerId && String(itemId).trim() === String(activeSellerId).trim())
-            );
-          });
-          p = matched || {};
+        const rawMsg = res?.message;
+        const p = Array.isArray(rawMsg) ? (rawMsg[0] || {}) : (res?.data || res || {});
+        const foundSellerId = p.sellerId || p.seller_id || p.uid || p.id;
+        if (foundSellerId) {
+          const sid = String(foundSellerId).trim();
+          localStorage.setItem("sellerId", sid);
+          sessionStorage.setItem("sellerId", sid);
+          localStorage.setItem("__haatza_sellerId", sid);
+          sessionStorage.setItem("__haatza_sellerId", sid);
         }
-
-        const pEmail = p.email || p.sellerEmail || p.userEmail || "";
-        const pId = p.sellerId || p.seller_id || p.uid || p.id || "";
-        
-        const isMatch = 
-          (resolvedEmail && pEmail && pEmail.toLowerCase().trim() === resolvedEmail.toLowerCase().trim()) ||
-          (activeSellerId && pId && String(pId).trim() === String(activeSellerId).trim());
-
-        let onboardingData = {};
-        if (isMatch || (!pEmail && !pId && Object.keys(p).length > 0)) {
-          onboardingData = p.seller || p.data || p;
-          if (Array.isArray(onboardingData)) {
-            onboardingData = onboardingData[0] || {};
-          }
-        } else {
-          console.warn("[DashboardLayout] Profile API response email/id did not match authenticated seller. Discarding to prevent override.");
-        }
-
-        const resolvedName =
-          onboardingData.fullName ||
-          (onboardingData.firstName ? (onboardingData.firstName + (onboardingData.lastName ? " " + onboardingData.lastName : "")).trim() : "") ||
-          onboardingData.name ||
-          onboardingData.nickname ||
-          onboardingData.sellerName ||
-          "";
-
-        const resolvedCompanyName =
-          onboardingData.companyName ||
-          onboardingData.company_name ||
-          onboardingData.storeName ||
-          onboardingData.store_name ||
-          onboardingData.tradeName ||
-          onboardingData.trade_name ||
-          onboardingData.businessName ||
-          onboardingData.business_name ||
-          "";
-
-        const resolvedPhone =
-          onboardingData.phone ||
-          onboardingData.phonenumber ||
-          onboardingData.phone_number ||
-          onboardingData.mobile_number ||
-          onboardingData.contact ||
-          onboardingData.mobile ||
-          "";
-
-        const rawLogo =
-          onboardingData.logoUrl ||
-          onboardingData.logo ||
-          onboardingData.profileImage ||
-          onboardingData.profileImg ||
-          "";
-
-        const resolvedLogoUrl = rawLogo ? resolveLogoUrl(rawLogo) : null;
-
-        const mergedSeller = {
-          ...authenticatedSeller,
-          name: (resolvedName && resolvedName !== "Seller") ? resolvedName : authenticatedSeller.name,
-          companyName: (resolvedCompanyName && resolvedCompanyName !== "Seller") ? resolvedCompanyName : authenticatedSeller.companyName,
-          phone: resolvedPhone || authenticatedSeller.phone,
-          logoUrl: resolvedLogoUrl || authenticatedSeller.logoUrl,
-          GSTIN: onboardingData.GSTIN || onboardingData.gstin || authenticatedSeller.GSTIN || "",
-          gstin: onboardingData.GSTIN || onboardingData.gstin || authenticatedSeller.gstin || "",
-          address: onboardingData.address || authenticatedSeller.address || "",
-          pincode: onboardingData.pincode || onboardingData.pinCode || authenticatedSeller.pincode || "",
-          storageType: onboardingData.storageType || authenticatedSeller.storageType || "",
-          nickname: onboardingData.nickname || authenticatedSeller.nickname || resolvedName || "",
-          accountManager: onboardingData.accountManager || "",
-          bankName: onboardingData.bankName || "",
-          accountHolder: onboardingData.accountHolder || "",
-          accountNumber: onboardingData.accountNumber || "",
-          ifscCode: onboardingData.ifscCode || "",
-          panNumber: onboardingData.panNumber || "",
-          profileFetched: true,
-          status: onboardingData.status || authenticatedSeller.status || "",
-        };
-
-        // Task H debug logging
-        const registrationData = parsedSellerData;
-        const otpResponse = parsedSellerData;
-        const sellerData = parsedSellerData;
-        const onboardingResponse = onboardingData;
-        const finalSellerData = mergedSeller;
-
-        console.log("Registration Data:", registrationData);
-        console.log("OTP Response:", otpResponse);
-        console.log("Session Seller Data:", sellerData);
-        console.log("Onboarding Response:", onboardingResponse);
-        console.log("Profile API Response:", profileResponse);
-        console.log("Final Dashboard Seller Data:", finalSellerData);
-
-        updateUserRef.current(mergedSeller);
+        setSeller({
+          name: p.sellerName || p.companyName || "Seller",
+          email: resolvedEmail,
+          role: "Seller",
+          avatarInitial: (p.sellerName || p.companyName || "Seller")[0].toUpperCase(),
+          logoUrl: null,
+        });
       })
       .catch((err) => {
         console.warn("[DashboardLayout] getUserProfile failed, using fallback display:", err);
-        updateUserRef.current(authenticatedSeller);
+        setSeller({
+          name: "Seller",
+          email: resolvedEmail,
+          role: "Seller",
+          avatarInitial: "S",
+          logoUrl: null,
+        });
       })
       .finally(() => {
         setLoadingProfile(false);
       });
   }, [resolvedEmail]);
 
-  return { loadingProfile };
+  return { seller, loadingProfile };
 };
 
 // ─── Main Layout ───────────────────────────────────────────────────────────────
 function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
 
-  const sellerDataRaw = localStorage.getItem("sellerData");
-  let sellerData = {};
-  if (sellerDataRaw) {
-    try { sellerData = JSON.parse(sellerDataRaw); } catch {}
-  }
+  const sellerEmail = resolveSellerEmail(location.state);
+  const { seller, loadingProfile } = useSellerDisplayData(sellerEmail);
 
-  const sellerEmail = sellerData.email || user?.email || resolveSellerEmail(location.state);
-  const { loadingProfile }  = useSellerDisplayData(sellerEmail, updateUser, user);
-
-  const [sidebarOpen,      setSidebarOpen]      = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isMobile,         setIsMobile]         = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -298,27 +127,11 @@ function DashboardLayout() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  const handleSidebarToggle  = () => setSidebarOpen(prev => !prev);
-  const handleSidebarClose   = () => { if (isMobile) setSidebarOpen(false); };
-  const handleCollapseChange = (collapsed) => setSidebarCollapsed(collapsed);
+  const handleSidebarToggle = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const handleSidebarClose = useCallback(() => { if (isMobile) setSidebarOpen(false); }, [isMobile]);
+  const handleCollapseChange = useCallback((collapsed) => setSidebarCollapsed(collapsed), []);
 
   const activeSellerId = getSellerId();
-
-  useEffect(() => {
-    if (!sellerEmail || (!loadingProfile && !activeSellerId)) {
-      navigate("/signin", { replace: true });
-      return;
-    }
-
-    if (!loadingProfile && activeSellerId && user) {
-      const status = (user.status || "").toLowerCase().trim();
-      const ACTIVE_VALUES = new Set(["active", "completed", "complete", "done"]);
-      if (!status || !ACTIVE_VALUES.has(status)) {
-        console.log("[DashboardLayout] Redirecting to onboarding due to inactive/empty status:", status);
-        navigate("/onboarding", { replace: true });
-      }
-    }
-  }, [sellerEmail, loadingProfile, activeSellerId, user, navigate]);
 
   if (loadingProfile && !activeSellerId) {
     return (
@@ -344,27 +157,82 @@ function DashboardLayout() {
   }
 
   if (!sellerEmail || (!loadingProfile && !activeSellerId)) {
-    return null;
+    return (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        backgroundColor: "#f5f7ff",
+        fontFamily: "Inter, sans-serif",
+        padding: "24px",
+        textAlign: "center"
+      }}>
+        <div style={{
+          background: "#ffffff",
+          borderRadius: "16px",
+          padding: "40px",
+          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.05)",
+          maxWidth: "440px",
+          width: "100%"
+        }}>
+          <div style={{
+            color: "#ef4444",
+            fontSize: "48px",
+            marginBottom: "16px"
+          }}>⚠️</div>
+          <h2 style={{
+            fontSize: "22px",
+            fontWeight: "700",
+            color: "#1f2937",
+            marginBottom: "12px"
+          }}>Session Expired</h2>
+          <p style={{
+            color: "#6b7280",
+            fontSize: "14px",
+            lineHeight: "1.5",
+            marginBottom: "24px"
+          }}>Seller session not found. Please login again.</p>
+          <button
+            onClick={() => navigate("/signin")}
+            style={{
+              backgroundColor: "#2563eb",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              padding: "12px 24px",
+              fontWeight: "600",
+              fontSize: "14px",
+              cursor: "pointer",
+              transition: "background-color 0.2s"
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = "#1d4ed8"}
+            onMouseOut={(e) => e.target.style.backgroundColor = "#2563eb"}
+          >
+            Go to Sign In
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div
       className={[
         "app-container",
-        sidebarOpen      ? "sidebar-open"      : "",
+        sidebarOpen ? "sidebar-open" : "",
         sidebarCollapsed ? "sidebar-collapsed" : "",
       ].filter(Boolean).join(" ")}
     >
-      <HaatzaNavbar seller={user || {}} />
+      <HaatzaNavbar seller={seller || {}} />
 
       <Sidebar
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
         onToggle={handleSidebarToggle}
-        sellerName={user?.name || user?.fullName || ""}
-        sellerEmail={user?.email || ""}
-        sellerPhone={user?.phone || ""}
-        sellerId={user?.sellerId || ""}
+        sellerName={seller?.name || ""}
+        sellerEmail={seller?.email || sellerEmail || ""}
         onCollapseChange={handleCollapseChange}
         isMobile={isMobile}
       />

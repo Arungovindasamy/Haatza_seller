@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext";
-import LogoutConfirmModal from "../../common/LogoutConfirmModal/LogoutConfirmModal";
 import "./Navbar.css";
 import haatzaSellerLogo from "../../../assets/Images/haatzaSellerlogo.png";
 import {
@@ -9,13 +7,14 @@ import {
   Wallet,
   MessageSquare,
   Search,
-  ChevronDown,
   User,
   Settings,
   HelpCircle,
   LogOut,
   X,
 } from "lucide-react";
+
+
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -24,44 +23,22 @@ const getGreeting = () => {
   return "Good Evening";
 };
 
-const HaatzaNavbar = ({ seller: propSeller = {} }) => {
+const HaatzaNavbar = ({ seller = {} }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const seller = user || propSeller || {};
-  console.log("Navbar Seller Data:", seller);
-
-  const [dropdownOpen, setDropdownOpen]         = useState(false);
-  const [mobileIconsOpen, setMobileIconsOpen]   = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileIconsOpen, setMobileIconsOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [searchFocused, setSearchFocused]       = useState(false);
-  const [searchValue, setSearchValue]           = useState("");
-  const [scrolled, setScrolled]                 = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [scrolled, setScrolled] = useState(false);
 
-  /* ── NEW: Logout confirmation modal state ─────────────────── */
-  const [showLogoutModal, setShowLogoutModal]   = useState(false);
+  const dropdownRef = useRef(null);
+  const mobileIconRef = useRef(null);
+
 
   // Dropdown states
   const [remindersDropdownOpen, setRemindersDropdownOpen] = useState(false);
-
-  const dropdownRef   = useRef(null);
-  const mobileIconRef = useRef(null);
-
-  const greeting = getGreeting();
-
-  const sellerName    =
-    seller.name ||
-    seller.fullName ||
-    seller.sellerName ||
-    seller.userName ||
-    seller.firstName ||
-    seller.nickname ||
-    "";
-  const sellerEmail   = seller.email         || "";
-  const sellerRole    = seller.role          || "Seller";
-  const sellerId      = seller.sellerId      || "";
-  const sellerInitial = seller.avatarInitial || (sellerName ? sellerName.charAt(0).toUpperCase() : "");
-  const sellerLogoUrl = seller.logoUrl       || null;
 
   const toggleRemindersDropdown = () => {
     const nextState = !remindersDropdownOpen;
@@ -80,6 +57,14 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
       )
     );
   };
+
+  const greeting = getGreeting();
+
+  const sellerName = seller?.name || "";
+  const sellerEmail = seller?.email || "";
+  const sellerRole = seller?.role || "";
+  const sellerInitial = seller?.avatarInitial || (sellerName ? sellerName.charAt(0).toUpperCase() : "");
+  const sellerLogoUrl = seller?.logoUrl || null;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -113,89 +98,46 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ── Confirmed logout: run existing auth logout + navigate ── */
-  const handleLogoutConfirm = () => {
-    setShowLogoutModal(false);
-    logout();
-    navigate("/signup");
-  };
-
-  /* ── Cancelled: just close the popup ─────────────────────── */
-  const handleLogoutCancel = () => {
-    setShowLogoutModal(false);
-  };
-
   const dropdownItems = [
-    {
-      icon: React.createElement(User, { size: 16 }),
-      label: "My Profile",
-      danger: false,
-      onClick: () => { setDropdownOpen(false); navigate("/dashboard/settings"); }
-    },
-    {
-      icon: React.createElement(Settings, { size: 16 }),
-      label: "Business Settings",
-      danger: false,
-      onClick: () => { setDropdownOpen(false); navigate("/dashboard/settings"); }
-    },
-    {
-      icon: React.createElement(Wallet, { size: 16 }),
-      label: "Wallet",
-      danger: false,
-      onClick: () => { setDropdownOpen(false); navigate("/dashboard/wallet"); }
-    },
-    {
-      icon: React.createElement(HelpCircle, { size: 16 }),
-      label: "Help Center",
-      danger: false,
-      onClick: () => { setDropdownOpen(false); navigate("/dashboard/help"); }
-    },
-    {
-      /* ── CHANGED: instead of running logout() directly, open the modal ── */
-      icon: React.createElement(LogOut, { size: 16 }),
-      label: "Logout",
-      danger: true,
-      onClick: () => {
-        setDropdownOpen(false);       // close the profile dropdown first
-        setShowLogoutModal(true);     // then show the confirmation popup
-      }
-    },
+    { icon: React.createElement(User, { size: 16 }), label: "My Profile", danger: false },
+    { icon: React.createElement(Settings, { size: 16 }), label: "Business Settings", danger: false },
+    { icon: React.createElement(Wallet, { size: 16 }), label: "Wallet", danger: false },
+    { icon: React.createElement(HelpCircle, { size: 16 }), label: "Help Center", danger: false },
+    { icon: React.createElement(LogOut, { size: 16 }), label: "Logout", danger: true },
   ];
 
   /* ── Avatar: letter or logo image ── */
   const AvatarContent = () =>
     sellerLogoUrl
       ? React.createElement(
-          "div", { className: "avatar" },
-          React.createElement("img", { src: sellerLogoUrl, alt: sellerName, className: "avatar-img" })
-        )
+        "div", { className: "avatar" },
+        React.createElement("img", { src: sellerLogoUrl, alt: sellerName, className: "avatar-img" })
+      )
       : React.createElement("div", { className: "avatar" }, sellerInitial);
 
   /* ── Dropdown avatar (slightly larger) ── */
   const DropdownAvatarContent = () =>
     sellerLogoUrl
       ? React.createElement(
-          "div", { className: "dropdown-avatar" },
-          React.createElement("img", { src: sellerLogoUrl, alt: sellerName, className: "avatar-img" })
-        )
+        "div", { className: "dropdown-avatar" },
+        React.createElement("img", { src: sellerLogoUrl, alt: sellerName, className: "avatar-img" })
+      )
       : React.createElement("div", { className: "dropdown-avatar" }, sellerInitial);
 
   /* ── Greeting text shared between mobile & desktop center ── */
-  const GreetingText = () => {
-    const firstName = sellerName ? sellerName.trim().split(/\s+/)[0] : "";
-    return React.createElement(
+  const GreetingText = () =>
+    React.createElement(
       "p", { className: "greeting-text" },
       greeting,
-      firstName
+      sellerName
         ? React.createElement(
-            React.Fragment, null,
-            ", ",
-            React.createElement("span", { className: "greeting-name" }, firstName)
-          )
+          React.Fragment, null,
+          ", ",
+          React.createElement("span", { className: "greeting-name" }, sellerName)
+        )
         : null,
       " 👋"
     );
-  };
 
   /* ── 3-dot vertical icon SVG ── */
   const ThreeDotsIcon = () =>
@@ -207,7 +149,8 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
         fill: "currentColor",
         xmlns: "http://www.w3.org/2000/svg",
       },
-      React.createElement("circle", { cx: "12", cy: "5",  r: "1.5" }),
+      /* Three filled circles */
+      React.createElement("circle", { cx: "12", cy: "5", r: "1.5" }),
       React.createElement("circle", { cx: "12", cy: "12", r: "1.5" }),
       React.createElement("circle", { cx: "12", cy: "19", r: "1.5" })
     );
@@ -215,15 +158,6 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
   return React.createElement(
     React.Fragment,
     null,
-
-    /* ══════════════════════════════════════════════
-       LOGOUT CONFIRMATION MODAL
-    ══════════════════════════════════════════════ */
-    React.createElement(LogoutConfirmModal, {
-      isOpen: showLogoutModal,
-      onYes:  handleLogoutConfirm,
-      onNo:   handleLogoutCancel,
-    }),
 
     /* ══════════════════════════════════════════════
        NAVBAR
@@ -273,14 +207,14 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
               value: searchValue,
               onChange: (e) => setSearchValue(e.target.value),
               onFocus: () => setSearchFocused(true),
-              onBlur:  () => setSearchFocused(false),
+              onBlur: () => setSearchFocused(false),
             }),
             searchValue &&
-              React.createElement(
-                "button",
-                { className: "search-clear", onClick: () => setSearchValue("") },
-                React.createElement(X, { size: 14 })
-              )
+            React.createElement(
+              "button",
+              { className: "search-clear", onClick: () => setSearchValue("") },
+              React.createElement(X, { size: 14 })
+            )
           )
         ),
 
@@ -309,11 +243,11 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
             React.createElement(
               "div", { className: "notif-icon-container" },
               React.createElement(
-                "button",
-                {
-                  className: `icon-btn ${location.pathname === "/notifications" ? "active" : ""}`,
+                "button", 
+                { 
+                  className: `icon-btn ${location.pathname === "/notifications" ? "active" : ""}`, 
                   title: "Notifications",
-                  onClick: () => navigate("/notifications"),
+                  onClick: () => navigate("/notifications") 
                 },
                 React.createElement(Bell, { size: 20 })
               )
@@ -323,25 +257,25 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
             React.createElement(
               "div", { className: "wallet-icon-container" },
               React.createElement(
-                "button",
-                {
-                  className: `icon-btn ${location.pathname === "/wallet" ? "active" : ""}`,
+                "button", 
+                { 
+                  className: `icon-btn ${location.pathname === "/wallet" ? "active" : ""}`, 
                   title: "Wallet",
-                  onClick: () => navigate("/wallet"),
+                  onClick: () => navigate("/wallet") 
                 },
                 React.createElement(Wallet, { size: 20 })
               )
             ),
 
-            /* Messages Icon + Reminders Panel */
+            /* Messages Icon + Panel */
             React.createElement(
               "div", { className: "reminders-dropdown-container" },
               React.createElement(
-                "button",
-                {
-                  className: `icon-btn ${remindersDropdownOpen ? "active" : ""}`,
+                "button", 
+                { 
+                  className: `icon-btn ${remindersDropdownOpen ? "active" : ""}`, 
                   title: "Messages",
-                  onClick: toggleRemindersDropdown,
+                  onClick: toggleRemindersDropdown 
                 },
                 React.createElement(MessageSquare, { size: 20 })
               ),
@@ -368,46 +302,42 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
 
             /* Dropdown panel — reveals name, full email, role, menu items */
             dropdownOpen &&
+            React.createElement(
+              "div", { className: "dropdown-menu" },
+
+              /* Header: avatar + name + full email + role */
               React.createElement(
-                "div", { className: "dropdown-menu" },
-
-                /* Header: avatar + name + full email + role */
+                "div", { className: "dropdown-header" },
+                React.createElement(DropdownAvatarContent),
                 React.createElement(
-                  "div", { className: "dropdown-header" },
-                  React.createElement(DropdownAvatarContent),
+                  "div", { className: "dropdown-user-info" },
+                  sellerName &&
+                  React.createElement("p", { className: "dropdown-name" }, sellerName),
+                  /* Full email — word-break: break-all in CSS handles long addresses */
+                  sellerEmail &&
+                  React.createElement("p", { className: "dropdown-email" }, sellerEmail),
+                  sellerRole &&
+                  React.createElement("p", { className: "dropdown-role" }, sellerRole)
+                )
+              ),
+
+              React.createElement("div", { className: "dropdown-divider" }),
+
+              React.createElement(
+                "ul", { className: "dropdown-list" },
+                dropdownItems.map((item, i) =>
                   React.createElement(
-                    "div", { className: "dropdown-user-info" },
-                    sellerName &&
-                      React.createElement("p", { className: "dropdown-name" }, sellerName),
-                    sellerEmail &&
-                      React.createElement("p", { className: "dropdown-email" }, sellerEmail),
-                    sellerRole &&
-                      React.createElement("p", { className: "dropdown-role" }, sellerRole),
-                    sellerId &&
-                      React.createElement("p", { className: "dropdown-role", style: { fontSize: "11.5px", color: "rgba(0, 0, 0, 0.45)", marginTop: "2px" } }, `Seller ID: ${sellerId}`)
-                  )
-                ),
-
-                React.createElement("div", { className: "dropdown-divider" }),
-
-                React.createElement(
-                  "ul", { className: "dropdown-list" },
-                  dropdownItems.map((item, i) =>
+                    "li", { key: i },
                     React.createElement(
-                      "li", { key: i },
-                      React.createElement(
-                        "button",
-                        {
-                          className: `dropdown-item ${item.danger ? "danger" : ""}`,
-                          onClick: item.onClick
-                        },
-                        React.createElement("span", { className: "di-icon"  }, item.icon),
-                        React.createElement("span", { className: "di-label" }, item.label)
-                      )
+                      "button",
+                      { className: `dropdown-item ${item.danger ? "danger" : ""}` },
+                      React.createElement("span", { className: "di-icon" }, item.icon),
+                      React.createElement("span", { className: "di-label" }, item.label)
                     )
                   )
                 )
               )
+            )
           ),
 
           /* ── 3-dot toggle (tablet + mobile) — opens Bell/Wallet/Messages drawer ── */
@@ -429,32 +359,33 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
        MOBILE SEARCH BAR (slides below navbar on tap)
     ══════════════════════════════════════════════ */
     mobileSearchOpen &&
+    React.createElement(
+      "div", { className: "mobile-search-bar" },
+      React.createElement(Search, { className: "search-icon", size: 16 }),
+      React.createElement("input", {
+        type: "text",
+        className: "search-input",
+        placeholder: "Search products, orders…",
+        value: searchValue,
+        autoFocus: true,
+        onChange: (e) => setSearchValue(e.target.value),
+      }),
       React.createElement(
-        "div", { className: "mobile-search-bar" },
-        React.createElement(Search, { className: "search-icon", size: 16 }),
-        React.createElement("input", {
-          type: "text",
-          className: "search-input",
-          placeholder: "Search products, orders…",
-          value: searchValue,
-          autoFocus: true,
-          onChange: (e) => setSearchValue(e.target.value),
-        }),
-        React.createElement(
-          "button",
-          {
-            className: "search-clear",
-            onClick: () => {
-              if (searchValue) setSearchValue("");
-              else setMobileSearchOpen(false);
-            },
+        "button",
+        {
+          className: "search-clear",
+          onClick: () => {
+            if (searchValue) setSearchValue("");
+            else setMobileSearchOpen(false);
           },
-          React.createElement(X, { size: 14 })
-        )
-      ),
+        },
+        React.createElement(X, { size: 14 })
+      )
+    ),
 
     /* ══════════════════════════════════════════════
        MOBILE / TABLET DRAWER — Bell, Wallet, Messages
+       Opens via 3-dot button on tablet + mobile
     ══════════════════════════════════════════════ */
     React.createElement(
       "div",
@@ -466,11 +397,11 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
         "div", { className: "mobile-icon-row" },
 
         React.createElement(
-          "button",
-          {
-            className: "mobile-drawer-icon-btn",
+          "button", 
+          { 
+            className: "mobile-drawer-icon-btn", 
             title: "Notifications",
-            onClick: () => { setMobileIconsOpen(false); navigate("/notifications"); },
+            onClick: () => { setMobileIconsOpen(false); navigate("/notifications"); }
           },
           React.createElement(
             "div", { className: "mobile-drawer-icon" },
@@ -480,11 +411,11 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
         ),
 
         React.createElement(
-          "button",
-          {
-            className: "mobile-drawer-icon-btn",
+          "button", 
+          { 
+            className: "mobile-drawer-icon-btn", 
             title: "Wallet",
-            onClick: () => { setMobileIconsOpen(false); navigate("/wallet"); },
+            onClick: () => { setMobileIconsOpen(false); navigate("/wallet"); }
           },
           React.createElement(
             "div", { className: "mobile-drawer-icon" },
@@ -494,11 +425,11 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
         ),
 
         React.createElement(
-          "button",
-          {
-            className: "mobile-drawer-icon-btn",
+          "button", 
+          { 
+            className: "mobile-drawer-icon-btn", 
             title: "Messages",
-            onClick: () => { setMobileIconsOpen(false); navigate("/notifications"); },
+            onClick: () => { setMobileIconsOpen(false); navigate("/notifications"); }
           },
           React.createElement(
             "div", { className: "mobile-drawer-icon" },
@@ -511,10 +442,10 @@ const HaatzaNavbar = ({ seller: propSeller = {} }) => {
 
     /* Overlay to close mobile/tablet drawer */
     mobileIconsOpen &&
-      React.createElement("div", {
-        className: "drawer-overlay",
-        onClick: () => setMobileIconsOpen(false),
-      })
+    React.createElement("div", {
+      className: "drawer-overlay",
+      onClick: () => setMobileIconsOpen(false),
+    })
   );
 };
 

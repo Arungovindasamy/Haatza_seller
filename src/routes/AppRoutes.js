@@ -1,63 +1,41 @@
 import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-// ─── Auth & Onboarding (your existing flow) ───────────────────────────────────
-import SignInPage    from "../pages/auth/SignInPage";
-import SignUpPage    from "../pages/auth/SignUpPage";
-import OtpPage       from "../pages/auth/OtpPage";
-import OnboardingPage from "../pages/Onboarding/Onboarding";
-import WarehouseGetStarted from "../pages/Warehouse/WarehouseGetStarted";
+// Public pages
+const SignInPage = lazy(() => import("../pages/auth/SignInPage"));
+const SignUpPage = lazy(() => import("../pages/auth/SignUpPage"));
+const OtpPage = lazy(() => import("../pages/auth/OtpPage"));
+const OnboardingPage = lazy(() => import("../pages/Onboarding/Onboarding"));
 
-// ─── Dashboard Shell (new layout with Outlet + session validation) ─────────────
+// Main Shell Layout
 const DashboardLayout = lazy(() => import("../components/Layout/DashboardLayout/DashboardLayout"));
 
-// ─── Dashboard & General Pages ────────────────────────────────────────────────
-const DashboardPage      = lazy(() => import("../pages/Dashboard/DashboardPage"));
-const InventoryPage      = lazy(() => import("../pages/Inventory/InventoryPage"));
-const WalletPage         = lazy(() => import("../pages/Wallet/WalletPage"));
-const NotificationsPage  = lazy(() => import("../pages/Notifications/NotificationsPage"));
-const SettingsPage       = lazy(() => import("../pages/Settings/SettingsPage"));
-const TermsPage = lazy(() => import("../pages/Settings/TermsPage.js"));
-const PrivacyPolicyPage = lazy(() => import("../components/common/PrivacyPolicyPage"));
-const TermsOfUsePage = lazy(() => import("../components/common/TermsOfUsePage"));
-const PricingPage = lazy(() => import("../pages/Settings/PricingPage"));
-const ShippingReturnPage = lazy(() => import("../pages/Settings/ShippingReturnPage"));
-const SettlementsPage    = lazy(() => import("../pages/Settlements/SettlementsPage"));
-const HelpPage           = lazy(() => import("../pages/Help/HelpPage"));
-const AdvertisementPage  = lazy(() => import("../pages/Advertisement/AdvertisementPage"));
+// Dashboard pages
+const DashboardPage = lazy(() => import("../pages/Dashboard/DashboardPage"));
+const InventoryPage = lazy(() => import("../pages/Inventory/InventoryPage"));
+const WalletPage = lazy(() => import("../pages/Wallet/WalletPage"));
+const NotificationsPage = lazy(() => import("../pages/Notifications/NotificationsPage"));
+const SettingsPage = lazy(() => import("../pages/Settings/SettingsPage"));
+const SettlementsPage = lazy(() => import("../pages/Settlements/SettlementsPage"));
+const HelpPage = lazy(() => import("../pages/Help/HelpPage"));
+const AdvertisementPage = lazy(() => import("../pages/Advertisement/AdvertisementPage"));
 const CreateCampaignPage = lazy(() => import("../pages/Advertisement/CreateCampaignPage"));
-const HaatzaUpPage       = lazy(() => import("../pages/HaatzaUp/HaatzaUpPage"));
-const UploadReelPage     = lazy(() => import("../pages/HaatzaUp/UploadReelPage"));
+// const HaatzUpPage = lazy(() => import("../pages/HaatzUp/HaatzUpPage"));
+// const UploadReelPage = lazy(() => import("../pages/HaatzUp/UploadReelPage"));
+const GrowPlanPage = lazy(() => import("../pages/GrowPlan/GrowPlanPage"));
 
-// ─── Orders Pages ─────────────────────────────────────────────────────────────
-const OrdersPage         = lazy(() => import("../pages/OrdersPage/OrdersPage"));
-const OrderDetailsPage   = lazy(() => import("../components/orders/OrderDetailsPage/OrderDetailsPage"));
-const ConfirmedOrdersPage = lazy(() => import("../components/orders/ConfirmedOrdersPage/ConfirmedOrdersPage"));
-const ShippedOrdersPage  = lazy(() => import("../components/orders/ShippedOrdersPage/ShippedOrdersPage"));
-const CancelledOrdersPage = lazy(() => import("../components/orders/CancelledOrdersPage/CancelledOrdersPage"));
-const TrackingPage       = lazy(() => import("../components/orders/TrackingPage/TrackingPage"));
 
-// ─── Listings / Product Pages ─────────────────────────────────────────────────
-const AddListing         = lazy(() => import("../pages/AddProduct/AddListing/AddListing"));
-const SelectCategory     = lazy(() => import("../pages/AddProduct/SelectCategory/SelectCategory"));
-const ProductInfo        = lazy(() => import("../pages/AddProduct/ProductInfo/ProductInfo"));
-const SpecificationPage  = lazy(() => import("../pages/AddProduct/Specificationpage/SpecificationPage"));
-const PromotionPage      = lazy(() => import("../pages/AddProduct/Promotionpage/PromotionPage"));
-const ReviewSubmitPage   = lazy(() => import("../pages/AddProduct/ReviewSubmit/ReviewSubmit"));
-const MyListings         = lazy(() => import("../pages/AddProduct/MyListings/MyListings"));
+// Listings page flow
+const AddListing = lazy(() => import("../pages/AddProduct/AddListing/AddListing"));
+const SelectCategory = lazy(() => import("../pages/AddProduct/SelectCategory/SelectCategory"));
+const ProductInfo = lazy(() => import("../pages/AddProduct/ProductInfo/ProductInfo"));
+const SpecificationPage = lazy(() => import("../pages/AddProduct/Specificationpage/SpecificationPage"));
+const PromotionPage = lazy(() => import("../pages/AddProduct/Promotionpage/PromotionPage"));
+const ReviewSubmitPage = lazy(() => import("../pages/AddProduct/ReviewSubmit/ReviewSubmit"));
+const MyListings = lazy(() => import("../pages/AddProduct/MyListings/MyListings"));
 const InProgressListings = lazy(() => import("../pages/AddProduct/InProgressListings/InProgressListings"));
-const ReturnExchange     = lazy(() => import("../pages/ReturnExchange/ReturnExchange.jsx"));
-const ReturnDetailsPage  = lazy(() => import("../pages/ReturnExchange/ReturnDetailsPage.jsx"));
-const ProductInsightsList = lazy(() => import("../pages/ProductInsights/ProductInsightsList/ProductInsightsList"));
-const ProductInsightDetails = lazy(() => import("../pages/ProductInsights/ProductInsightDetails/ProductInsightDetails"));
-const ReferEarn = lazy(() => import("../pages/referearn/ReferEarn"));
-const ReferralShare = lazy(() => import("../pages/referearn/ReferralShare"));
-const CancelShipmentPage = lazy(() => import("../components/orders/CancelShipmentPage/CancelShipmentPage"));
-const InfluenceBranding  = lazy(() => import("../pages/InfluenceBranding/InfluenceBranding"));
-const InfluenceBrandingDetails = lazy(() => import("../pages/InfluenceBranding/InfluenceBrandingDetails"));
-const WarehousePage = lazy(() => import("../pages/Warehouse/Warehouse"));
 
-// ─── Loading Spinner ──────────────────────────────────────────────────────────
+// Loading spinner
 const PageLoader = () => (
   <div style={{
     display: "flex",
@@ -78,7 +56,7 @@ const PageLoader = () => (
   </div>
 );
 
-// ─── Placeholder for coming-soon sidebar pages ────────────────────────────────
+// Placeholder view
 const PlaceholderPage = ({ title }) => (
   <div className="page-placeholder" style={{ padding: "40px" }}>
     <div className="placeholder-card" style={{
@@ -94,156 +72,66 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
 function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/otp" element={<OtpPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
 
-        {/* ── Auth flow (your existing flow — entry point of the app) ── */}
-        <Route path="/"           element={<Navigate to="/signup" replace />} />
-        <Route path="/signin"     element={<SignInPage />} />
-        <Route path="/signup"     element={<SignUpPage />} />
-        <Route path="/otp"        element={<OtpPage />} />
-       <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route path="/privacy"    element={<PrivacyPolicyPage />} />
-        <Route path="/terms"      element={<TermsOfUsePage />} />
-        {/* ── Dashboard shell — all protected pages live inside here ── */}
-        {/*    DashboardLayout (Document 2) renders <Outlet /> for children */}
-        {/*    and handles session validation / redirect to /signin        */}
+        {/* Dashboard Shell Parent Route */}
         <Route element={<DashboardLayout />}>
-
-          {/* Dashboard home */}
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/settlements" element={<SettlementsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
 
-          {/* General sidebar pages */}
-          <Route path="/dashboard/inventory"    element={<InventoryPage />} />
-          <Route path="/dashboard/settlements"  element={<SettlementsPage />} />
-          <Route path="/dashboard/settings"     element={<SettingsPage />} />
-          <Route path="/dashboard/settings/terms" element={<TermsPage />} />
-          <Route path="/dashboard/settings/privacy" element={<PrivacyPolicyPage />} />
-          <Route path="/dashboard/settings/pricing" element={<PricingPage />} />
-          <Route path="/dashboard/settings/shipping" element={<ShippingReturnPage />} />
-          <Route path="/dashboard/wallet"       element={<WalletPage />} />
-          <Route path="/dashboard/notifications" element={<NotificationsPage />} />
-          <Route path="/wallet"                 element={<WalletPage />} />
-          <Route path="/notifications"          element={<NotificationsPage />} />
-          <Route path="/dashboard/help"         element={<HelpPage />} />
+          {/* Fallback mock placeholder pages */}
+          <Route path="/orders" element={<PlaceholderPage title="Orders" />} />
+          <Route path="/return-exchange" element={<PlaceholderPage title="Return / Exchange" />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/advertisement" element={<AdvertisementPage />} />
+          <Route path="/advertisement/create-campaign" element={<CreateCampaignPage />} />
+          {/* <Route path="/haatzup" element={<HaatzUpPage />} />
+          <Route path="/haatzup/upload-reel" element={<UploadReelPage />} /> */}
+          <Route path="/growplan" element={<GrowPlanPage />} />
+          <Route path="/productinsight" element={<PlaceholderPage title="Product Insight" />} />
+          <Route path="/warehouse" element={<PlaceholderPage title="Warehouse" />} />
+          <Route path="/influencer" element={<PlaceholderPage title="Influencer Branding" />} />
+          <Route path="/growthcentral" element={<PlaceholderPage title="Growth Central" />} />
+          <Route path="/qualityinsights" element={<PlaceholderPage title="Quality Insights" />} />
+          <Route path="/referandearn" element={<PlaceholderPage title="Refer & Earn" />} />
 
-          {/* Non-prefixed general sidebar page aliases */}
-          <Route path="/inventory"              element={<InventoryPage />} />
-          <Route path="/settlements"            element={<SettlementsPage />} />
-          <Route path="/settings"               element={<SettingsPage />} />
-          <Route path="/settings/terms"         element={<TermsPage />} />
-          <Route path="/settings/privacy"       element={<PrivacyPolicyPage />} />
-          <Route path="/settings/pricing"       element={<PricingPage />} />
-          <Route path="/settings/shipping"      element={<ShippingReturnPage />} />
-          <Route path="/help"                   element={<HelpPage />} />
+          {/* Listings Creation Steps */}
+          <Route path="/listing" element={<AddListing />} />
+          <Route path="/listing/select-category" element={<SelectCategory />} />
+          <Route path="/listing/select-category/product-info" element={<ProductInfo />} />
+          <Route path="/listing/select-category/product-info/specifications" element={<SpecificationPage />} />
+          <Route path="/listing/select-category/product-info/specifications/promotions" element={<PromotionPage />} />
+          <Route path="/listing/promotions" element={<ReviewSubmitPage />} />
 
-          {/* Advertisement */}
-          <Route path="/dashboard/advertisement"                 element={<AdvertisementPage />} />
-          <Route path="/dashboard/advertisement/create-campaign" element={<CreateCampaignPage />} />
-          <Route path="/advertisement"                           element={<AdvertisementPage />} />
-          <Route path="/advertisement/create-campaign"           element={<CreateCampaignPage />} />
+          {/* Listings Edit Steps */}
+          <Route path="/listing/edit/:tableId/product-info" element={<ProductInfo />} />
+          <Route path="/listing/edit/:tableId/product-info/specifications" element={<SpecificationPage />} />
+          <Route path="/listing/edit/:tableId/product-info/specifications/promotions" element={<PromotionPage />} />
+          <Route path="/listing/edit/:tableId/product-info/specifications/promotions/review" element={<ReviewSubmitPage />} />
 
-          {/* HaatzaUp */}
-          <Route path="/dashboard/haatzaup"             element={<HaatzaUpPage />} />
-          <Route path="/dashboard/haatzaup/upload-reel" element={<UploadReelPage />} />
-          <Route path="/haatzaup"                       element={<HaatzaUpPage />} />
-          <Route path="/haatzaup/upload-reel"           element={<UploadReelPage />} />
-
-          {/* Orders */}
-          <Route path="/dashboard/orders"                      element={<OrdersPage />} />
-          <Route path="/dashboard/orders/details/:tableId"     element={<OrderDetailsPage />} />
-          <Route path="/dashboard/orders/cancel/:tableId"      element={<CancelShipmentPage />} />
-          <Route path="/dashboard/orders/tracking/:waybill"    element={<TrackingPage />} />
-          <Route path="/dashboard/orders/confirmed"            element={<ConfirmedOrdersPage />} />
-          <Route path="/dashboard/orders/shipped"              element={<ShippedOrdersPage />} />
-          <Route path="/dashboard/orders/cancelled"            element={<CancelledOrdersPage />} />
-          <Route path="/orders"                                element={<OrdersPage />} />
-          <Route path="/orders/details/:tableId"               element={<OrderDetailsPage />} />
-          <Route path="/orders/cancel/:tableId"                element={<CancelShipmentPage />} />
-          <Route path="/orders/tracking/:waybill"              element={<TrackingPage />} />
-          <Route path="/orders/confirmed"                      element={<ConfirmedOrdersPage />} />
-          <Route path="/orders/shipped"                        element={<ShippedOrdersPage />} />
-          <Route path="/orders/cancelled"                      element={<CancelledOrdersPage />} />
-
-          {/* Placeholder sidebar pages */}
-          <Route path="/dashboard/return-exchange"  element={<ReturnExchange />} />
-          <Route path="/dashboard/returns"          element={<ReturnExchange />} />
-          <Route path="/dashboard/returns/details/:tableId"  element={<ReturnDetailsPage />} />
-          <Route path="/returns"                    element={<ReturnExchange />} />
-          <Route path="/returns/details/:tableId"   element={<ReturnDetailsPage />} />
-          <Route path="/return-exchange"            element={<ReturnExchange />} />
-          <Route path="/return-exchange/details/:tableId"   element={<ReturnDetailsPage />} />
-          <Route path="/dashboard/growplan"         element={<PlaceholderPage title="Grow Plan" />} />
-          <Route path="/growplan"                   element={<PlaceholderPage title="Grow Plan" />} />
-          <Route path="/dashboard/productinsight"   element={<ProductInsightsList />} />
-          <Route path="/productinsight"             element={<ProductInsightsList />} />
-          <Route path="/product-insight/:tableId"   element={<ProductInsightDetails />} />
-          <Route path="/dashboard/warehouse"        element={<WarehousePage />} />
-          <Route path="/dashboard/warehouse/callback" element={<WarehousePage />} />
-          <Route path="/warehouse"                  element={<WarehousePage />} />
-          <Route path="/warehouse/callback"          element={<WarehousePage />} />
-          <Route path="/warehouse/get-started" element={<WarehouseGetStarted />} />
-          <Route path="/dashboard/influencer"       element={<InfluenceBranding />} />
-          <Route path="/influencer"                 element={<InfluenceBranding />} />
-          <Route path="/dashboard/influencer/details/:tableId" element={<InfluenceBrandingDetails />} />
-          <Route path="/influencer/details/:tableId"           element={<InfluenceBrandingDetails />} />
-          <Route path="/dashboard/growthcentral"    element={<PlaceholderPage title="Growth Central" />} />
-          <Route path="/growthcentral"              element={<PlaceholderPage title="Growth Central" />} />
-          <Route path="/dashboard/qualityinsights"  element={<PlaceholderPage title="Quality Insights" />} />
-          <Route path="/qualityinsights"            element={<PlaceholderPage title="Quality Insights" />} />
-          <Route path="/dashboard/referandearn"     element={<ReferEarn />} />
-          <Route path="/referandearn"               element={<ReferEarn />} />
-          <Route path="/referearn"                  element={<ReferEarn />} />
-          <Route path="/dashboard/referearn"        element={<ReferEarn />} />
-          <Route path="/refer-earn"                 element={<ReferEarn />} />
-          <Route path="/dashboard/refer-earn"       element={<ReferEarn />} />
-          <Route path="/refer-earn/share"           element={<ReferralShare />} />
-          <Route path="/dashboard/refer-earn/share" element={<ReferralShare />} />
-
-          {/* ── Listings: Create flow ── */}
-          <Route path="/dashboard/listing"                                                              element={<AddListing />} />
-          <Route path="/dashboard/listing/select-category"                                             element={<SelectCategory />} />
-          <Route path="/dashboard/listing/select-category/product-info"                               element={<ProductInfo />} />
-          <Route path="/dashboard/listing/select-category/product-info/specifications"                element={<SpecificationPage />} />
-          <Route path="/dashboard/listing/select-category/product-info/specifications/promotions"     element={<PromotionPage />} />
-          <Route path="/dashboard/listing/promotions"                                                  element={<ReviewSubmitPage />} />
-          <Route path="/listing"                                                                       element={<AddListing />} />
-          <Route path="/listing/select-category"                                                      element={<SelectCategory />} />
-          <Route path="/listing/select-category/product-info"                                        element={<ProductInfo />} />
-          <Route path="/listing/select-category/product-info/specifications"                         element={<SpecificationPage />} />
-          <Route path="/listing/select-category/product-info/specifications/promotions"              element={<PromotionPage />} />
-          <Route path="/listing/promotions"                                                           element={<ReviewSubmitPage />} />
-
-          {/* ── Listings: Edit flow ── */}
-          <Route path="/dashboard/listing/edit/:tableId/product-info"                                              element={<ProductInfo />} />
-          <Route path="/dashboard/listing/edit/:tableId/product-info/specifications"                               element={<SpecificationPage />} />
-          <Route path="/dashboard/listing/edit/:tableId/product-info/specifications/promotions"                    element={<PromotionPage />} />
-          <Route path="/dashboard/listing/edit/:tableId/product-info/specifications/promotions/review"             element={<ReviewSubmitPage />} />
-          <Route path="/listing/edit/:tableId/product-info"                                                        element={<ProductInfo />} />
-          <Route path="/listing/edit/:tableId/product-info/specifications"                                         element={<SpecificationPage />} />
-          <Route path="/listing/edit/:tableId/product-info/specifications/promotions"                              element={<PromotionPage />} />
-          <Route path="/listing/edit/:tableId/product-info/specifications/promotions/review"                       element={<ReviewSubmitPage />} />
-
-          {/* ── Listings: Views ── */}
-          <Route path="/dashboard/listing/my-listings"   element={<MyListings />} />
-          <Route path="/dashboard/listing/view-details"  element={<ReviewSubmitPage />} />
-          <Route path="/dashboard/listing/in-progress"   element={<InProgressListings />} />
-          <Route path="/dashboard/my-listings"           element={<MyListings />} />
-          <Route path="/dashboard/inprogress-listings"   element={<InProgressListings />} />
-          <Route path="/listing/my-listings"             element={<MyListings />} />
-          <Route path="/listing/view-details"            element={<ReviewSubmitPage />} />
-          <Route path="/listing/in-progress"             element={<InProgressListings />} />
-          <Route path="/my-listings"                     element={<MyListings />} />
-          <Route path="/inprogress-listings"             element={<InProgressListings />} />
-
+          {/* Listing Views */}
+          <Route path="/listing/my-listings" element={<MyListings />} />
+          <Route path="/listing/view-details" element={<ReviewSubmitPage />} />
+          <Route path="/listing/in-progress" element={<InProgressListings />} />
+          <Route path="/my-listings" element={<MyListings />} />
+          <Route path="/inprogress-listings" element={<InProgressListings />} />
         </Route>
 
-        {/* Catch-all — redirect unknown routes back to signup */}
-        <Route path="*" element={<Navigate to="/signup" replace />} />
-
+        {/* Catch-all fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>
   );
